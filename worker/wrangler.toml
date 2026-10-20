@@ -1,0 +1,9 @@
+name = "futbol-data-proxy"
+main = "football-data-proxy.js"
+compatibility_date = "2026-01-01"
+
+# El secreto NO va aquí. Se define con:  npx wrangler secret put FOOTBALL_DATA_TOKEN
+# (o en el panel de Cloudflare: Worker > Settings > Variables and Secrets > tipo Secret)
+
+[vars]
+ALLOWED_ORIGINS = "https://jctrainingworks.github.io,http://localhost:8000"
