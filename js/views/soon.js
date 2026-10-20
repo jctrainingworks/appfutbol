@@ -1,5 +1,4 @@
 const S = {
-  analisis: ['Análisis', 'Probabilidades 1X2, doble oportunidad, goles y ambos marcan con un modelo Poisson validado sobre datos reales.'],
   combinadas: ['Combinadas', 'Combinadas simuladas teniendo en cuenta la correlación entre selecciones, con cuota justa y valor esperado.'],
   historial: ['Historial', 'Registro de pronósticos, cuotas, resultados y rendimiento del modelo.'],
 };

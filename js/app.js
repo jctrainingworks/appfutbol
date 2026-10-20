@@ -3,11 +3,12 @@ import { icon, esc } from './ui.js';
 import home from './views/home.js';
 import { ligas, liga } from './views/leagues.js';
 import { partidos, partido } from './views/matches.js';
+import { analisis, analisisPartido } from './views/analysis.js';
 import { soon } from './views/soon.js';
 
 const NAV = [['', 'Inicio', 'home'], ['ligas', 'Ligas', 'trophy'], ['partidos', 'Partidos', 'cal'], ['analisis', 'Análisis', 'chart'], ['combinadas', 'Combinadas', 'layers'], ['historial', 'Historial', 'clock']];
 const ROUTES = [['', home], ['ligas', ligas], ['ligas/:id', liga], ['partidos', partidos], ['partidos/:id', partido],
-  ['analisis', soon('analisis')], ['combinadas', soon('combinadas')], ['historial', soon('historial')]];
+  ['analisis', analisis], ['analisis/:id', analisisPartido], ['combinadas', soon('combinadas')], ['historial', soon('historial')]];
 
 const $ = s => document.querySelector(s);
 $('#nav').innerHTML = NAV.map(([p, l, i]) => `<a href="#/${p}" data-p="${p}">${icon(i)}<span>${l}</span></a>`).join('');

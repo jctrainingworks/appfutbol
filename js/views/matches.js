@@ -34,5 +34,5 @@ export const partido = async ({ id }) => {
   ${m.source === 'demo' ? '<div class="demo">Partido de demostración (ficticio).</div>' : ''}
   <h2>Estadísticas observadas</h2><div class="grid">${stat(m.home)}${stat(m.away)}</div>
   <h2>Últimos resultados</h2><div class="grid">${recent(m.home, hr)}${recent(m.away, ar)}</div>
-  <h2>Modelo y cuotas</h2><div class="card empty">Sin estimaciones: el motor estadístico y las cuotas aún no están conectados. No se muestran probabilidades hasta tener datos reales.</div>`;
+  <h2>Modelo y cuotas</h2><a class="card lcard" href="#/analisis/${esc(m.id)}"><b>Ver análisis del partido</b><span class="mu">Probabilidades Poisson, cuotas justas y validación del modelo. Las cuotas reales aún no están conectadas.</span></a>`;
 };

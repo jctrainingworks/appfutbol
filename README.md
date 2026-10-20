@@ -4,13 +4,14 @@ App estática (HTML + JS modular, sin dependencias ni build) para analizar fútb
 
 **Estado actual:** interfaz y navegación completas con **datos de demostración ficticios** (marcados como DEMO).
 Ya existe el proveedor real de **football-data.org** (`js/data/footballdata.js`) y su proxy (`worker/`), pero
-**no está activo** hasta desplegar el Worker y rellenar `proxyUrl` en `js/config.js`. Aún no hay Supabase ni motor estadístico.
+**no está activo** hasta desplegar el Worker y rellenar `proxyUrl` en `js/config.js`. Aún no hay Supabase. El motor estadístico (Poisson) ya existe y alimenta la pestaña Análisis.
 
 ## Estructura
 - `index.html` – entrada. `manifest.webmanifest` + `sw.js` – PWA.
 - `js/config.js` – único punto de configuración (`provider`, `proxyUrl`, `competitions`). Solo valores públicos; nunca secretos.
 - `js/data/` – capa de datos. `demo.js` define el contrato (`leagues, league, match, matches, standings`);
   `footballdata.js` lo implementa con datos reales; `standings.js` es una función pura compartida.
+- `js/model/poisson.js` – modelo Poisson (1X2, doble oportunidad, goles, ambos marcan, cuotas justas, EV) y backtest walk-forward. Funciones puras.
 - `js/views/` – vistas (Inicio, Ligas, Partidos y marcadores de Análisis/Combinadas/Historial).
 - `worker/` – Cloudflare Worker que guarda la clave de football-data.org en el servidor. Ver `worker/README.md`.
 
