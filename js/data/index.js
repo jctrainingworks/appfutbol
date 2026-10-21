@@ -1,8 +1,15 @@
 // Punto único de acceso a datos. Las vistas solo importan `data` de aquí.
-// Un proveedor nuevo = js/data/<fuente>.js con el contrato de demo.js, registrado aquí.
-// Si se pide la fuente real pero falta el proxy, se usa la demo (marcada como DEMO en la app).
+// provider 'auto' (por defecto): usa los datos reales de data/ si existen y, si no, la demo (marcada como DEMO).
+// 'footballdata' = API con clave vía proxy (worker/). 'demo' = datos ficticios.
 import { CONFIG } from '../config.js';
 import { demo } from './demo.js';
 import { footballdata } from './footballdata.js';
+import { loadIndex, makeProvider } from './footballcsv.js';
 
-export const data = CONFIG.provider === 'footballdata' && CONFIG.proxyUrl ? footballdata : demo;
+async function pick() {
+  if (CONFIG.provider === 'demo') return demo;
+  if (CONFIG.provider === 'footballdata') return CONFIG.proxyUrl ? footballdata : demo;
+  const index = await loadIndex();
+  return index ? makeProvider(index) : demo;
+}
+export const data = await pick();

@@ -1,0 +1,44 @@
+name: Actualizar datos
+
+# Descarga los CSV de football-data.co.uk y los guarda en data/ (la app los lee de ahí).
+# Se ejecuta: al subir estos ficheros, una vez al día, y a mano desde la pestaña Actions.
+on:
+  schedule:
+    - cron: '20 7 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/update-data.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Descargar y convertir datos
+        run: node scripts/fetch-data.mjs
+      - name: Guardar cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "Sin cambios en los datos"
+          else
+            git commit -m "Actualizar datos (football-data.co.uk)"
+            git pull --rebase
+            git push
+          fi
