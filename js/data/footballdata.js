@@ -11,6 +11,9 @@ const NAMES = { PD: 'LaLiga', PL: 'Premier League', BL1: 'Bundesliga', SA: 'Seri
 const STATUS = { FINISHED: 'FT', AWARDED: 'FT', IN_PLAY: 'LIVE', PAUSED: 'LIVE', SCHEDULED: 'NS', TIMED: 'NS' };
 const mem = new Map();
 
+// Marcador al descanso si la API lo trae (si no, null: esos partidos no cuentan en los mercados de parte).
+const half = s => Number.isInteger(s?.halfTime?.home) && Number.isInteger(s?.halfTime?.away) ? { h: s.halfTime.home, a: s.halfTime.away } : null;
+
 const team = t => ({ id: String(t.id), name: t.shortName || t.name });
 
 // Para modelos 1X2/goles interesa el marcador a 90 min: si hubo prórroga/penaltis se usa regularTime.
@@ -21,11 +24,11 @@ function goals(s) {
 
 export function mapSeason(code, raw) {
   const matches = (raw.matches || []).filter(m => m.homeTeam?.id && m.awayTeam?.id).map(m => {
-    const status = STATUS[m.status] || 'OTHER', score = goals(m.score);
+    const status = STATUS[m.status] || 'OTHER', score = goals(m.score), ht = half(m.score);
     return {
       id: `${code}-${m.id}`, leagueId: code, round: m.matchday || 0, kickoff: m.utcDate,
       home: team(m.homeTeam), away: team(m.awayTeam),
-      status: status === 'FT' && !score ? 'OTHER' : status, score: status === 'FT' || status === 'LIVE' ? score : null, source: SRC,
+      status: status === 'FT' && !score ? 'OTHER' : status, score: (status === 'FT' || status === 'LIVE') && score ? { ...score, ht } : null, source: SRC,
     };
   });
   const teams = [...new Map(matches.flatMap(m => [m.home, m.away]).map(t => [t.id, t])).values()];

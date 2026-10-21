@@ -3,6 +3,7 @@
 import { computeStandings } from './standings.js';
 
 const rng = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const binom = (n, p, r) => { let k = 0; for (let i = 0; i < n; i++) if (r() < p) k++; return k; };
 const poisson = (l, r) => { const L = Math.exp(-l); let k = 0, p = 1; do { k++; p *= r(); } while (p > L); return k - 1; };
 const DAY = 864e5;
 const DEFS = [
@@ -20,7 +21,7 @@ function rounds(teams) { // método del círculo (todos contra todos)
 }
 
 function build() {
-  const r = rng(2026), today = new Date(); today.setHours(0, 0, 0, 0);
+  const r = rng(2026), rh = rng(77), today = new Date(); today.setHours(0, 0, 0, 0);
   const leagues = [], matches = [];
   for (const d of DEFS) {
     const teams = d.teams.map((name, i) => ({ id: `${d.id}-${i}`, name, att: .9 + r() * .9, leak: .8 + r() * .7 }));
@@ -32,7 +33,7 @@ function build() {
       matches.push({
         id: `${d.id}-j${ri + 1}-${i}`, leagueId: d.id, round: ri + 1, kickoff: new Date(when).toISOString(),
         home: { id: h.id, name: h.name }, away: { id: a.id, name: a.name },
-        status: fin ? 'FT' : 'NS', score: fin ? { h: hg, a: ag } : null, source: 'demo',
+        status: fin ? 'FT' : 'NS', score: fin ? { h: hg, a: ag, ht: { h: binom(hg, .45, rh), a: binom(ag, .45, rh) } } : null, source: 'demo',
       });
     }));
     leagues.push({ id: d.id, name: d.name, country: 'Demo', rounds: all.length, teams: teams.map(({ id, name }) => ({ id, name })), source: 'demo' });
