@@ -28,7 +28,9 @@ export function makeProvider(index) {
   const ids = index.leagues.map(l => l.id);
   const day = new Date(index.updated).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   const sorted = (list, status) => {
-    const r = list.filter(m => status === 'FT' ? m.status === 'FT' : status === 'NS' ? m.status === 'NS' : true).sort((a, b) => a.kickoff < b.kickoff ? -1 : 1);
+    // "Próximos": sin resultado y que no hayan empezado hace más de 3 h (el CSV tarda en traer el resultado; no hay directos).
+    const cut = Date.now() - 3 * 36e5;
+    const r = list.filter(m => status === 'FT' ? m.status === 'FT' : status === 'NS' ? m.status === 'NS' && Date.parse(m.kickoff) > cut : true).sort((a, b) => a.kickoff < b.kickoff ? -1 : 1);
     return status === 'FT' ? r.reverse() : r;
   };
   const pick = async leagueId => leagueId ? (ids.includes(leagueId) ? [await league(leagueId)] : []) : (await Promise.allSettled(ids.map(league))).filter(x => x.status === 'fulfilled').map(x => x.value);
