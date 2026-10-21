@@ -56,3 +56,11 @@ export const table = (rows, mini) => `<div class="card tw"><table class="tbl"><t
   </tbody></table></div>`;
 
 export const chips = items => `<div class="chips">${items.map(([href, label, on]) => `<a class="chip" href="${href}"${on ? ' aria-current="true"' : ''}>${esc(label)}</a>`).join('')}</div>`;
+
+// Ligas agrupadas por país (respeta el orden de aparición).
+export const byCountry = leagues => {
+  const m = new Map();
+  for (const l of leagues) { const c = l.country || 'Otras'; if (!m.has(c)) m.set(c, []); m.get(c).push(l); }
+  return [...m];
+};
+export const countryRows = leagues => `<div class="card list">${byCountry(leagues).map(([c, ls]) => `<div class="cty"><span>${esc(c)}</span><div class="chips wrap">${ls.map(l => `<a class="chip" href="#/ligas/${esc(l.id)}">${esc(l.name)}</a>`).join('')}</div></div>`).join('')}</div>`;

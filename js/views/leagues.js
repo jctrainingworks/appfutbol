@@ -1,12 +1,13 @@
 import { data } from '../data/index.js';
-import { esc, table, groupByDay, chips, empty } from '../ui.js';
+import { esc, table, groupByDay, chips, empty, byCountry } from '../ui.js';
 
 export const ligas = async () => {
   const leagues = await data.leagues();
   const tables = await Promise.all(leagues.map(l => data.standings(l.id)));
-  return `<h1>Ligas</h1><div class="grid">${leagues.map((l, i) => `<a class="card lcard" href="#/ligas/${esc(l.id)}">
-    <b>${esc(l.name)}</b><span class="mu">${esc(l.country)} · ${l.teams.length} equipos · ${l.rounds} jornadas</span>
-    <span class="mu">Líder: ${esc(tables[i][0].team.name)} · ${tables[i][0].pts} pts</span></a>`).join('')}</div>`;
+  const lead = Object.fromEntries(leagues.map((l, i) => [l.id, tables[i][0]]));
+  return `<h1>Ligas</h1>${byCountry(leagues).map(([c, ls]) => `<h2>${esc(c)}</h2><div class="card list">${ls.map(l => `<a class="lrow" href="#/ligas/${esc(l.id)}">
+    <span><b>${esc(l.name)}</b><small class="mu">${l.teams.length} equipos · ${l.rounds} jornadas</small></span>
+    <span class="mu">${lead[l.id] && lead[l.id].pj ? `${esc(lead[l.id].team.name)} · ${lead[l.id].pts} pts` : ''}</span></a>`).join('')}</div>`).join('')}`;
 };
 
 export const liga = async ({ id, q }) => {
