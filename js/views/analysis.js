@@ -10,9 +10,10 @@ const bar = (label, p) => `<div class="pb"><div class="pbh"><span>${label}</span
 const pct0 = p => p == null ? '–' : Math.round(p * 100) + '%';
 const cell = (r, p) => `<td><b>${pct0(p)}</b><small>${r.k}/${r.n}</small></td>`;
 
-function trendsHtml(tr, m, last) {
-  const base = `#/analisis/${esc(m.id)}`;
-  const sel = chips([[base, 'Últimos 10', last === 10], [base + '?n=all', 'Toda la temporada', last === 0]]);
+function trendsHtml(tr, m, last, ord) {
+  const href = (n, o) => `#/analisis/${esc(m.id)}?n=${n}&o=${o}`, N = last ? '10' : 'all';
+  const sel = chips([[href('10', ord), 'Últimos 10', last === 10], [href('all', ord), 'Toda la temporada', last === 0]]) + chips([[href(N, 'p'), 'Más probables', ord === 'p'], [href(N, 'edge'), 'Mayor ventaja vs liga', ord === 'edge']]);
+  if (ord === 'edge') tr = { ...tr, game: [...tr.game].sort((a, b) => b.edge - a.edge) };
   if (!tr.n.h || !tr.n.a) return `<h2>Mercados más probables</h2>${empty('Sin tendencias: alguno de los equipos aún no tiene partidos jugados como local/visitante en esta competición.')}`;
   const small = tr.n.h < 5 || tr.n.a < 5;
   const game = `<div class="card tw"><table class="tbl"><thead><tr><th class="l">Mercado del partido</th><th>${esc(m.home.name)}<small>en casa</small></th><th>${esc(m.away.name)}<small>fuera</small></th><th>Media</th><th>Liga</th></tr></thead><tbody>
@@ -21,10 +22,10 @@ function trendsHtml(tr, m, last) {
     ${tr.team.map(r => `<tr><td class="l">${esc(r.label)}</td>${cell(r.h, r.ph)}${cell(r.a, r.pa)}<td>${pct0(r.pl)}</td></tr>`).join('')}</tbody></table></div>`;
   return `<h2>Mercados más probables</h2>${sel}
     ${small ? '<div class="demo">Muestra pequeña: algún equipo tiene menos de 5 partidos en esa condición. Los porcentajes son poco fiables.</div>' : ''}
-    <p class="mu">Basado en ${tr.n.h} partidos de ${esc(m.home.name)} en casa y ${tr.n.a} de ${esc(m.away.name)} fuera. Ordenado por «Media» (de ambos equipos, suavizada hacia la media de la liga con ${SMOOTH} partidos virtuales). Los 3 primeros están marcados.</p>
+    <p class="mu">Basado en ${tr.n.h} partidos de ${esc(m.home.name)} en casa y ${tr.n.a} de ${esc(m.away.name)} fuera. Orden: ${ord === 'edge' ? '«Media» menos «Liga» (qué mercados superan más a la media de la liga)' : '«Media» (de ambos equipos, suavizada hacia la media de la liga con ' + SMOOTH + ' partidos virtuales)'}. Los 3 primeros están marcados.</p>
     ${game}<div style="height:12px"></div>${team}
     <p class="mu" style="margin-top:6px">«k/n» = veces que se cumplió / partidos. Es lo que pasó, no una garantía de lo que pasará: compáralo siempre con la columna «Liga».
-    ${tr.skipped ? ' Algunos mercados (por partes) no se muestran porque la fuente no trae el marcador al descanso de suficientes partidos.' : ''}</p>`;
+    ${tr.skipped ? ' Algunos mercados no se muestran porque la fuente no trae ese dato (descanso, corners o tarjetas) de suficientes partidos.' : ''} Tarjetas = amarillas + rojas.</p>`;
 }
 
 const demoNote = () => data.meta.isDemo ? '<div class="demo"><b>Sobre datos de demostración.</b> Las probabilidades se calculan con partidos ficticios: solo sirven para revisar la pantalla.</div>' : '';
@@ -44,14 +45,14 @@ export const analisisPartido = async ({ id, q }) => {
   const [l, all] = await Promise.all([data.league(m.leagueId), data.matches({ leagueId: m.leagueId })]);
   // Entrenamiento: solo partidos terminados ANTES de este (también válido al revisar un partido ya jugado).
   const train = all.filter(x => x.status === 'FT' && x.kickoff < m.kickoff);
-  const last = q?.get('n') === 'all' ? 0 : 10, tr = matchTrends(train, m.home.id, m.away.id, { last });
+  const last = q?.get('n') === 'all' ? 0 : 10, ord = q?.get('o') === 'edge' ? 'edge' : 'p', tr = matchTrends(train, m.home.id, m.away.id, { last });
   const model = fit(train), pr = predict(model, m.home.id, m.away.id), bt = backtest(train);
   const head = `<a class="back" href="#/analisis">‹ Análisis</a>
   <div class="hero"><div class="mu">${esc(l.name)} · Jornada ${m.round} · ${dayLabel(m.kickoff)} ${fmtTime(m.kickoff)}</div>
     <div class="vs"><div class="side-t">${crest(m.home, 1)}<span>${esc(m.home.name)}</span></div>
       <div class="when"><b>${m.status === 'FT' ? `${m.score.h} - ${m.score.a}` : 'vs'}</b><small>${m.status === 'FT' ? 'Finalizado' : 'Por jugar'}</small></div>
       <div class="side-t">${crest(m.away, 1)}<span>${esc(m.away.name)}</span></div></div></div>${demoNote()}`;
-  const trends = trendsHtml(tr, m, last);
+  const trends = trendsHtml(tr, m, last, ord);
   if (!pr) return `${head}${trends}${empty('Sin estimación del modelo Poisson: alguno de los equipos todavía no tiene partidos jugados en esta competición.')}`;
 
   const low = Math.min(pr.games.h, pr.games.a) < 5;

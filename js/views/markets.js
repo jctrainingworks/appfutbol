@@ -24,7 +24,8 @@ export const mercados = async ({ q }) => {
   const inScope = lg ? all.filter(l => l.id === lg) : all;
   const teams = rankTeams(inScope, mk, { venue, minGames: MIN_TEAM });
   const leagues = rankLeagues(all, mk, { minGames: MIN_LEAGUE });
-  const group = (kind, label) => `<optgroup label="${label}">${ALL_MARKETS.filter(m => m.kind === kind).map(m => `<option value="${url({ m: m.id, s: m.kind === 'team' ? 'e' : scope })}"${m.id === mk.id ? ' selected' : ''}>${esc(m.label)}</option>`).join('')}</optgroup>`;
+  const grps = [...new Set(ALL_MARKETS.map(m => m.grp))];
+  const group = g => `<optgroup label="${g}">${ALL_MARKETS.filter(m => m.grp === g).map(m => `<option value="${url({ m: m.id, s: m.kind === 'team' ? 'e' : scope })}"${m.id === mk.id ? ' selected' : ''}>${esc(m.label)}</option>`).join('')}</optgroup>`;
   const lgOpts = `<option value="${url({ l: '' })}">Todas las ligas</option>` + byCountry(all).map(([c, ls]) => `<optgroup label="${esc(c)}">${ls.map(l => `<option value="${url({ l: l.id })}"${l.id === lg ? ' selected' : ''}>${esc(l.name)}</option>`).join('')}</optgroup>`).join('');
 
   const bestT = teams[0], bestL = leagues[0];
@@ -44,12 +45,12 @@ export const mercados = async ({ q }) => {
   }
 
   return `<h1>Análisis</h1>${analysisTabs('m')}
-  <div class="filters"><select class="sel" aria-label="Mercado" onchange="location.hash=this.value">${group('game', 'Del partido')}${group('team', 'Por equipo')}</select>
+  <div class="filters"><select class="sel" aria-label="Mercado" onchange="location.hash=this.value">${grps.map(group).join('')}</select>
     <select class="sel" aria-label="Liga" onchange="location.hash=this.value">${lgOpts}</select></div>
   ${mk.kind === 'game' ? chips([[url({ s: 'e' }), 'Equipos', scope === 'e'], [url({ s: 'l' }), 'Ligas', scope === 'l']]) : ''}
   ${scope === 'e' ? chips(VENUES.map(([v, t]) => [url({ v }), t, venue === v])) : ''}
   <h2>Mejor para este mercado</h2>${best}
   <h2>${scope === 'l' ? 'Ranking de ligas' : 'Ranking de equipos'}</h2>${table}
   <p class="mu" style="margin-top:8px">«Se cumple» = veces que ocurrió / partidos de esta temporada (mínimo ${scope === 'l' ? MIN_LEAGUE : MIN_TEAM}). «Ajustada» acerca el porcentaje a la media de su liga (${SMOOTH} partidos virtuales) para no premiar rachas cortas; el ranking se ordena por ella.
-  Es lo que ha pasado, no una garantía. ${data.meta.isDemo ? 'Datos de demostración.' : ''}</p>`;
+  ${/^(t_)?ca/.test(mk.id) ? 'Tarjetas = amarillas + rojas; en Inglaterra y Escocia la 2ª amarilla que acaba en roja no cuenta como amarilla.' : ''} Es lo que ha pasado, no una garantía. ${data.meta.isDemo ? 'Datos de demostración.' : ''}</p>`;
 };
