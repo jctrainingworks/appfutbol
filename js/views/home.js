@@ -15,7 +15,7 @@ export default async () => {
     ['Fuente de datos', data.meta.isDemo ? 'Demo' : data.meta.label, data.meta.isDemo ? 'warn' : 'ok'],
     ['Almacenamiento (Supabase)', 'Sin conectar', 'off'],
     ['Motor estadístico', 'Poisson + tendencias por mercado', 'ok'],
-    ['Cuotas', 'Pendiente (manual)', 'off'],
+    ['Cuotas', data.meta.isDemo ? 'Pendiente' : 'Bet365 1X2 y más/menos 2,5 (según calendario)', data.meta.isDemo ? 'off' : 'ok'],
   ];
   return `${data.meta.isDemo ? `<div class="demo"><b>Datos de demostración.</b> Equipos, partidos y resultados son ficticios y sirven solo para revisar el diseño.</div>` : ''}
   ${hero}

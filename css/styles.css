@@ -102,3 +102,4 @@ h2{font-size:15px;font-weight:650;color:var(--mu);margin:22px 0 8px}
 .tbl .l{white-space:normal;min-width:104px}
 .tbl th{white-space:normal;line-height:1.25}
 .tbl td,.tbl th{padding-left:5px;padding-right:5px}
+.ev.up{color:var(--w)}.ev.dn{color:var(--l)}

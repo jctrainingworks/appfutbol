@@ -1,5 +1,5 @@
 import { data } from '../data/index.js';
-import { fit, predict, backtest, fairOdds } from '../model/poisson.js';
+import { fit, predict, backtest, fairOdds, expectedValue } from '../model/poisson.js';
 import { matchTrends, SMOOTH } from '../model/trends.js';
 import { esc, crest, fmtTime, dayLabel, groupByDay, chips, empty, analysisTabs } from '../ui.js';
 
@@ -30,6 +30,25 @@ function trendsHtml(tr, m, last, ord) {
 
 const demoNote = () => data.meta.isDemo ? '<div class="demo"><b>Sobre datos de demostración.</b> Las probabilidades se calculan con partidos ficticios: solo sirven para revisar la pantalla.</div>' : '';
 
+const dec = x => x.toFixed(2).replace('.', ',');
+const evTxt = ev => (ev >= 0 ? '+' : '') + (ev * 100).toFixed(1).replace('.', ',') + '%';
+
+// Cuotas Bet365 que trae la fuente (1X2 y más/menos 2,5) frente a la probabilidad del modelo. EV = p·cuota − 1 (teórico).
+function oddsHtml(m, pr, bt) {
+  const o = m.odds || {}, rows = [];
+  if (o.b365) rows.push(['1 · ' + m.home.name, o.b365[0], pr && pr.p1], ['X · Empate', o.b365[1], pr && pr.pX], ['2 · ' + m.away.name, o.b365[2], pr && pr.p2]);
+  if (o.ou25) rows.push(['Más de 2,5 goles', o.ou25[0], pr && pr.over['2.5']], ['Menos de 2,5 goles', o.ou25[1], pr && pr.under['2.5']]);
+  if (!rows.length) return empty('Sin cuotas Bet365 para este partido en la fuente de datos.');
+  const margin = o.b365 ? o.b365.reduce((a, x) => a + 1 / x, 0) - 1 : null;
+  const warn = bt && !bt.beatsBase
+    ? 'En esta muestra el modelo NO mejora a la base ingenua en 1X2: ignora el valor esperado.'
+    : 'El modelo es simple (Poisson sin forma reciente, lesiones ni calidad del rival) y usa pocos partidos: un valor esperado positivo aquí NO indica una apuesta rentable.';
+  return `<div class="card tw"><table class="tbl"><thead><tr><th class="l">Mercado</th><th>Cuota<small>Bet365</small></th><th>Implícita<small>1/cuota</small></th><th>Modelo</th><th>Valor esperado</th></tr></thead><tbody>
+    ${rows.map(([l, od, p]) => `<tr><td class="l">${esc(l)}</td><td><b>${dec(od)}</b></td><td>${pct0(1 / od)}</td><td>${p == null ? '–' : `${pct0(p)}<small>justa ${odd(p)}</small>`}</td>
+      <td>${p == null ? '–' : `<b class="ev ${expectedValue(p, od) > 0.05 ? 'up' : expectedValue(p, od) < -0.05 ? 'dn' : ''}">${evTxt(expectedValue(p, od))}</b>`}</td></tr>`).join('')}</tbody></table></div>
+    <p class="mu" style="margin-top:6px">${margin != null ? `Margen de la casa en 1X2: ${(margin * 100).toFixed(1).replace('.', ',')}%. ` : ''}Valor esperado teórico = probabilidad del modelo × cuota − 1, por unidad apostada. ${warn}${m.status === 'FT' ? ' Partido ya jugado: son las cuotas de antes del partido.' : ''}</p>`;
+}
+
 export const analisis = async ({ q }) => {
   const lg = q.get('l') || '', leagues = await data.leagues();
   const list = await data.matches({ leagueId: lg || undefined, status: 'NS', limit: 30 });
@@ -53,7 +72,7 @@ export const analisisPartido = async ({ id, q }) => {
       <div class="when"><b>${m.status === 'FT' ? `${m.score.h} - ${m.score.a}` : 'vs'}</b><small>${m.status === 'FT' ? 'Finalizado' : 'Por jugar'}</small></div>
       <div class="side-t">${crest(m.away, 1)}<span>${esc(m.away.name)}</span></div></div></div>${demoNote()}`;
   const trends = trendsHtml(tr, m, last, ord);
-  if (!pr) return `${head}${trends}${empty('Sin estimación del modelo Poisson: alguno de los equipos todavía no tiene partidos jugados en esta competición.')}`;
+  if (!pr) return `${head}${trends}${empty('Sin estimación del modelo Poisson: alguno de los equipos todavía no tiene partidos jugados en esta competición.')}<h2>Cuotas Bet365</h2>${oddsHtml(m, null, null)}`;
 
   const low = Math.min(pr.games.h, pr.games.a) < 5;
   const btHtml = bt ? `<div class="card"><div class="st"><span>Partidos evaluados (walk-forward)</span><span>${bt.n}</span></div>
@@ -81,7 +100,7 @@ export const analisisPartido = async ({ id, q }) => {
     <div class="st"><span>Partidos previos usados</span><span>${pr.trainMatches} liga · ${pr.games.h} local · ${pr.games.a} visitante</span></div></div>
   <p class="mu" style="margin-top:6px">«@» es la cuota justa (1/probabilidad), sin margen de casa. Son estimaciones, no certezas ni garantía de beneficio.</p>
   <h2>Validación del modelo</h2>${btHtml}
-  <h2>Cuotas y valor esperado</h2><div class="card empty">Pendiente: la introducción manual de cuotas y el cálculo del valor esperado llegan en el siguiente bloque.</div>
+  <h2>Cuotas Bet365 y valor esperado</h2>${oddsHtml(m, pr, bt)}
   <h2>Método</h2><div class="card empty"><p>Poisson independiente para goles de cada equipo. Ataque y defensa de cada equipo = goles a favor/en contra respecto a la media de la liga, encogidos hacia esa media con 4 partidos virtuales. Solo usa partidos anteriores a este.</p>
     <p>No incluye ventaja de forma reciente, lesiones, descansos ni la correlación 0-0/1-1 de Dixon-Coles.</p></div>`;
 };

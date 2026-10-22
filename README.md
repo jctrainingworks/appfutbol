@@ -4,7 +4,8 @@ App estática (HTML + JS modular, sin dependencias ni build) para analizar fútb
 
 **Estado actual:** la app lee **datos reales** de `data/` (los genera una tarea diaria de GitHub desde football-data.co.uk).
 Si `data/` aún no existe, muestra datos de **demostración** ficticios, marcados como DEMO. Aún no hay Supabase.
-El motor estadístico (Poisson y tendencias por mercado) alimenta la pestaña Análisis.
+El motor estadístico (Poisson y tendencias por mercado, incluidos corners y tarjetas) alimenta la pestaña Análisis:
+por partido (porcentajes, modelo, cuotas Bet365 y valor esperado) y por mercado (mejor liga y equipo para cada mercado).
 
 ## Estructura
 - `index.html` – entrada. `manifest.webmanifest` + `sw.js` – PWA.
@@ -13,6 +14,7 @@ El motor estadístico (Poisson y tendencias por mercado) alimenta la pestaña An
   `footballdata.js` lo implementa con datos reales; `standings.js` es una función pura compartida.
 - `scripts/` + `.github/workflows/update-data.yml` – descarga diaria de los CSV y conversión a `data/*.json`.
 - `js/model/poisson.js` – modelo Poisson (1X2, doble oportunidad, goles, ambos marcan, cuotas justas, EV) y backtest walk-forward. Funciones puras.
+- `js/model/trends.js` – frecuencias k/n por mercado (goles, partes, corners, tarjetas), suavizado a la liga y rankings.
 - `js/views/` – vistas (Inicio, Ligas, Partidos y marcadores de Análisis/Combinadas/Historial).
 - `worker/` – Cloudflare Worker que guarda la clave de football-data.org en el servidor. Ver `worker/README.md`.
 
