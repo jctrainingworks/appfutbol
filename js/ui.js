@@ -64,3 +64,5 @@ export const byCountry = leagues => {
   return [...m];
 };
 export const countryRows = leagues => `<div class="card list">${byCountry(leagues).map(([c, ls]) => `<div class="cty"><span>${esc(c)}</span><div class="chips wrap">${ls.map(l => `<a class="chip" href="#/ligas/${esc(l.id)}">${esc(l.name)}</a>`).join('')}</div></div>`).join('')}</div>`;
+
+export const analysisTabs = active => chips([['#/analisis', 'Por partido', active === 'p'], ['#/analisis?t=mercados', 'Por mercado', active === 'm']]);

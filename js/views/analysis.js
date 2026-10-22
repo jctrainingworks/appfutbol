@@ -1,7 +1,7 @@
 import { data } from '../data/index.js';
 import { fit, predict, backtest, fairOdds } from '../model/poisson.js';
 import { matchTrends, SMOOTH } from '../model/trends.js';
-import { esc, crest, fmtTime, dayLabel, groupByDay, chips, empty } from '../ui.js';
+import { esc, crest, fmtTime, dayLabel, groupByDay, chips, empty, analysisTabs } from '../ui.js';
 
 const pc = p => (p * 100).toFixed(1).replace('.', ',') + '%';
 const odd = p => fairOdds(p).toFixed(2).replace('.', ',');
@@ -33,7 +33,7 @@ export const analisis = async ({ q }) => {
   const lg = q.get('l') || '', leagues = await data.leagues();
   const list = await data.matches({ leagueId: lg || undefined, status: 'NS', limit: 30 });
   const href = l => `#/analisis${l ? '?l=' + encodeURIComponent(l) : ''}`;
-  return `<h1>Análisis</h1><p class="mu">Elige un partido para ver las estimaciones del modelo Poisson.</p>${demoNote()}
+  return `<h1>Análisis</h1>${analysisTabs('p')}<p class="mu">Elige un partido para ver las estimaciones del modelo Poisson.</p>${demoNote()}
     ${chips([[href(''), 'Todas', !lg], ...leagues.map(l => [href(l.id), l.name, lg === l.id])])}
     ${groupByDay(list, Object.fromEntries(leagues.map(l => [l.id, l.name]))).replace(/href="#\/partidos\//g, 'href="#/analisis/')}`;
 };

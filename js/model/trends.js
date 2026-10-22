@@ -72,3 +72,34 @@ export function matchTrends(matches, homeId, awayId, { last = 10 } = {}) {
   game.sort((x, y) => y.avg - x.avg);
   return { n: { h: gh.length, a: ga.length }, game, team, skipped };
 }
+
+// ---- Rankings por mercado (qué liga y qué equipo van mejor para un mercado) ----
+export const ALL_MARKETS = [...GAME_MARKETS.map(m => ({ ...m, kind: 'game' })), ...TEAM_MARKETS.map(m => ({ ...m, kind: 'team' }))];
+export const marketById = id => ALL_MARKETS.find(m => m.id === id);
+
+// leagues = [{ id, name, country, matches }]. venue: 'all' | 'home' | 'away'. Ordena por frecuencia suavizada hacia la media de su liga.
+export function rankTeams(leagues, mk, { venue = 'all', minGames = 5 } = {}) {
+  const rows = [];
+  for (const l of leagues) {
+    const ms = done(l.matches);
+    if (!ms.length) continue;
+    const lgF = frac(leagueRate(l.matches, mk, mk.kind === 'team')), by = new Map();
+    const add = (t, g) => { if (!by.has(t.id)) by.set(t.id, { team: t, gs: [] }); by.get(t.id).gs.push(g); };
+    for (const m of ms) {
+      if (venue !== 'away') add(m.home, persp(m, true));
+      if (venue !== 'home') add(m.away, persp(m, false));
+    }
+    for (const { team, gs } of by.values()) {
+      const r = rate(gs, mk);
+      if (r.n >= minGames) rows.push({ leagueId: l.id, league: l.name, team, k: r.k, n: r.n, p: r.k / r.n, pl: lgF, sm: smooth(r, lgF) });
+    }
+  }
+  return rows.sort((a, b) => b.sm - a.sm || b.n - a.n);
+}
+
+// Solo para mercados del partido (en los de equipo, comparar ligas no tiene sentido). Mínimo de partidos con dato.
+export function rankLeagues(leagues, mk, { minGames = 10 } = {}) {
+  if (mk.kind !== 'game') return [];
+  return leagues.map(l => { const r = leagueRate(l.matches, mk, false); return { id: l.id, name: l.name, country: l.country, k: r.k, n: r.n, p: r.n ? r.k / r.n : null }; })
+    .filter(x => x.n >= minGames).sort((a, b) => b.p - a.p || b.n - a.n);
+}
