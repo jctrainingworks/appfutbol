@@ -23,9 +23,9 @@ const readJson = async p => { try { return JSON.parse(await readFile(p, 'utf8'))
 export async function run({ fetchFn = fetch, outDir = 'data', now = new Date(), log = console.log } = {}) {
   const season = seasonCode(now);
   await mkdir(outDir, { recursive: true });
-  let fixtures = [];
+  let fixtures = [], fxError = null;
   try { fixtures = toObjects(await get(fetchFn, FIXTURES_URL)); log(`fixtures.csv: ${fixtures.length} partidos`); }
-  catch (e) { log(`AVISO fixtures.csv no disponible (${e.message}): sin próximos partidos`); }
+  catch (e) { fxError = e.message; log(`AVISO fixtures.csv no disponible (${e.message}): sin próximos partidos`); }
   const prevIndex = await readJson(`${outDir}/index.json`);
   const leagues = []; let ok = 0, changed = 0;
   for (const l of LEAGUES) {
@@ -42,12 +42,17 @@ export async function run({ fetchFn = fetch, outDir = 'data', now = new Date(), 
       else log(`AVISO ${l.code}: sin partidos jugados en ${season}; se conserva lo anterior`);
     } catch (e) { log(`AVISO ${l.code}: ${e.message}; se conserva lo anterior`); }
     data = data || await readJson(file);
-    if (data) leagues.push({ id: l.code, name: l.name, country: l.country, season: data.season, matches: data.matches.length, played: data.matches.filter(m => m.status === 'FT').length });
+    if (data) leagues.push({ id: l.code, name: l.name, country: l.country, season: data.season, matches: data.matches.length, played: data.matches.filter(m => m.status === 'FT').length, upcoming: data.matches.filter(m => m.status === 'NS').length });
   }
   if (!leagues.length) throw new Error('No hay datos de ninguna liga');
   if (!ok) throw new Error('No se pudo descargar ninguna liga nueva');
   const updated = changed || !prevIndex?.updated ? now.toISOString() : prevIndex.updated; // última vez que cambió algún dato
-  await writeFile(`${outDir}/index.json`, JSON.stringify({ source: SOURCE, season, updated, leagues }));
+  // Diagnóstico de próximos partidos: filas que trae fixtures.csv, error de descarga (si lo hubo) y cuántos se guardaron.
+  const upcoming = leagues.reduce((n, l) => n + (l.upcoming || 0), 0);
+  const fxDivs = [...new Set(fixtures.map(r => r.Div).filter(Boolean))].sort();
+  const fx = { rows: fixtures.length, error: fxError, ligas: fxDivs, guardados: upcoming };
+  await writeFile(`${outDir}/index.json`, JSON.stringify({ source: SOURCE, season, updated, leagues, fixtures: fx }));
+  log(`Próximos partidos: ${fixtures.length} filas en fixtures.csv, ${upcoming} guardados`);
   log(`Listo: ${ok} ligas descargadas (${changed} con cambios), ${leagues.length} disponibles`);
   return { ok, leagues };
 }
