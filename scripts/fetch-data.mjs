@@ -50,7 +50,9 @@ export async function run({ fetchFn = fetch, outDir = 'data', now = new Date(), 
   // Diagnóstico de próximos partidos: filas que trae fixtures.csv, error de descarga (si lo hubo) y cuántos se guardaron.
   const upcoming = leagues.reduce((n, l) => n + (l.upcoming || 0), 0);
   const fxDivs = [...new Set(fixtures.map(r => r.Div).filter(Boolean))].sort();
-  const fx = { rows: fixtures.length, error: fxError, ligas: fxDivs, guardados: upcoming };
+  const fxDates = fixtures.map(r => /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.exec(r.Date || '')).filter(Boolean).map(([, d, mo, y]) => `${+y < 100 ? 2000 + +y : y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`).sort();
+  const today = now.toISOString().slice(0, 10);
+  const fx = { rows: fixtures.length, error: fxError, ligas: fxDivs, guardados: upcoming, desde: fxDates[0] || null, hasta: fxDates[fxDates.length - 1] || null, anterioresAHoy: fxDates.filter(d => d < today).length };
   await writeFile(`${outDir}/index.json`, JSON.stringify({ source: SOURCE, season, updated, leagues, fixtures: fx }));
   log(`Próximos partidos: ${fixtures.length} filas en fixtures.csv, ${upcoming} guardados`);
   log(`Listo: ${ok} ligas descargadas (${changed} con cambios), ${leagues.length} disponibles`);
