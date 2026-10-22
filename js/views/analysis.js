@@ -1,6 +1,8 @@
 import { data } from '../data/index.js';
 import { fit, predict, backtest, fairOdds, expectedValue } from '../model/poisson.js';
 import { matchTrends, SMOOTH } from '../model/trends.js';
+import { insight } from '../model/insight.js';
+import { computeStandings } from '../data/standings.js';
 import { esc, crest, fmtTime, dayLabel, groupByDay, chips, empty, analysisTabs } from '../ui.js';
 
 const pc = p => (p * 100).toFixed(1).replace('.', ',') + '%';
@@ -26,6 +28,23 @@ function trendsHtml(tr, m, last, ord) {
     ${game}<div style="height:12px"></div>${team}
     <p class="mu" style="margin-top:6px">«k/n» = veces que se cumplió / partidos. Es lo que pasó, no una garantía de lo que pasará: compáralo siempre con la columna «Liga».
     ${tr.skipped ? ' Algunos mercados no se muestran porque la fuente no trae ese dato (descanso, corners o tarjetas) de suficientes partidos.' : ''} Tarjetas = amarillas + rojas.</p>`;
+}
+
+const evCls = ev => ev > 0.05 ? 'up' : ev < -0.05 ? 'dn' : '';
+// Tarjeta de un vistazo: cómo se ve el partido y 1-2 mercados favoritos. Todo calculado por código (ver js/model/insight.js).
+function insightHtml(ins) {
+  const fav = f => `<div class="fav"><div class="favh"><span class="role">${esc(f.role)}</span><span class="conf c-${f.conf}">Confianza ${f.conf}</span></div>
+    <div class="favm">${esc(f.label)}</div>
+    <div class="favs"><b>${pct0(f.p)}</b><span>cuota justa ${odd(f.p)}</span>${f.odds ? `<span>Bet365 ${dec(f.odds)} · valor <b class="ev ${evCls(f.ev)}">${evTxt(f.ev)}</b></span>` : ''}</div>
+    <div class="mu">${f.modelOnly ? 'Probabilidad del modelo Poisson.' : `Tendencia ${pct0(f.trend)}${f.model != null ? ` · modelo ${pct0(f.model)}${f.agree ? ' (coinciden)' : ''}` : ' · sin contraste del modelo'}`}${f.edge != null ? ` · ${f.edge >= 0 ? '+' : ''}${Math.round(f.edge * 100)} pts vs liga` : ''} · ${f.n} partidos</div></div>`;
+  return `<h2>Lectura del partido</h2><div class="card read">
+    ${ins.lines.map(t => `<p>${esc(t)}</p>`).join('') || '<p class="mu">Sin datos suficientes para una lectura.</p>'}
+    ${ins.flags.length ? `<ul class="flags">${ins.flags.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+    ${ins.topTrend ? `<p class="mu">Patrón más marcado: <b>${esc(ins.topTrend.label)}</b> (${pct0(ins.topTrend.avg)}, ${Math.round(ins.topTrend.edge * 100) >= 0 ? '+' : ''}${Math.round(ins.topTrend.edge * 100)} pts sobre la media de la liga).</p>` : ''}</div>
+    <h2>Mercados favoritos</h2>
+    ${ins.favorites.length ? `<div class="grid">${ins.favorites.map(fav).join('')}</div>` : empty('Ningún mercado cumple los filtros (probabilidad ≥ 55%, muestra suficiente y tendencia y modelo de acuerdo). Mejor no forzar.')}
+    <ul class="mu cav">${ins.caveats.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+    <p class="mu">Son frecuencias pasadas y un modelo simple, no una garantía ni una recomendación de apuesta.</p>`;
 }
 
 const demoNote = () => data.meta.isDemo ? '<div class="demo"><b>Sobre datos de demostración.</b> Las probabilidades se calculan con partidos ficticios: solo sirven para revisar la pantalla.</div>' : '';
@@ -66,12 +85,13 @@ export const analisisPartido = async ({ id, q }) => {
   const train = all.filter(x => x.status === 'FT' && x.kickoff < m.kickoff);
   const last = q?.get('n') === 'all' ? 0 : 10, ord = q?.get('o') === 'edge' ? 'edge' : 'p', tr = matchTrends(train, m.home.id, m.away.id, { last });
   const model = fit(train), pr = predict(model, m.home.id, m.away.id), bt = backtest(train);
+  const ins = insight({ train, m, tr, pr, bt, standings: computeStandings(train, l.teams || []) });
   const head = `<a class="back" href="#/analisis">‹ Análisis</a>
   <div class="hero"><div class="mu">${esc(l.name)} · Jornada ${m.round} · ${dayLabel(m.kickoff)} ${fmtTime(m.kickoff)}</div>
     <div class="vs"><div class="side-t">${crest(m.home, 1)}<span>${esc(m.home.name)}</span></div>
       <div class="when"><b>${m.status === 'FT' ? `${m.score.h} - ${m.score.a}` : 'vs'}</b><small>${m.status === 'FT' ? 'Finalizado' : 'Por jugar'}</small></div>
       <div class="side-t">${crest(m.away, 1)}<span>${esc(m.away.name)}</span></div></div></div>${demoNote()}`;
-  const trends = trendsHtml(tr, m, last, ord);
+  const trends = insightHtml(ins) + trendsHtml(tr, m, last, ord);
   if (!pr) return `${head}${trends}${empty('Sin estimación del modelo Poisson: alguno de los equipos todavía no tiene partidos jugados en esta competición.')}<h2>Cuotas Bet365</h2>${oddsHtml(m, null, null)}`;
 
   const low = Math.min(pr.games.h, pr.games.a) < 5;
