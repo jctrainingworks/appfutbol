@@ -1,6 +1,6 @@
 # Estado del proyecto: App de análisis de fútbol (uso personal)
 
-**Última actualización:** 22-oct-2026 · rama main (el último commit está en git log).
+**Última actualización:** 22-oct-2026 (noche) · rama main (el último commit está en git log).
 **Regla de mantenimiento:** al terminar cada bloque, actualizar este archivo (y la copia "estado.md" del Project de Claude) con lo hecho, lo probado, lo pendiente y el siguiente paso.
 
 ## 1. Qué es y para qué
@@ -34,9 +34,10 @@ Inglaterra (Premier, Championship, League One, League Two), Escocia (Premiership
 - No probado: la web desplegada en un móvil real por parte de Claude (Juan sí la ve y ha dado el visto bueno al diseño); el Worker de Cloudflare (nunca desplegado); la primera ejecución de la Action sí funcionó (commit b96fa8e).
 
 ## 6. Límites conocidos
-- Próximos partidos: la fuente (fixtures.csv) solo publica los de hoy y mañana y solo de algunas ligas; a veces no hay ninguno. Cuando no hay ninguno, Análisis ofrece los últimos 30 partidos jugados (con aviso) para poder revisar la lectura. No hay marcadores en directo; los datos se actualizan unas 2 veces por semana en origen.
+- Próximos partidos: fixtures.csv de la fuente se actualiza cuando ellos quieren y solo cubre algunas ligas (el 22-oct a las 19:00 traía 27 filas de E1, E2, E3, SC1 y SP1, todas del 20-21 oct, ya jugadas: aún no estaba la jornada del fin de semana aunque Flashscore sí la tuviera). La descarga ahora corre cada 4 horas y data/index.json guarda un diagnóstico (campo fixtures: filas, ligas, fechas desde/hasta, guardados) para ver qué publicó la fuente. A veces no hay ninguno. Cuando no hay ninguno, Análisis ofrece los últimos 30 partidos jugados (con aviso) para poder revisar la lectura. No hay marcadores en directo; los datos se actualizan unas 2 veces por semana en origen.
 - Noruega y otras ligas pequeñas: no hay fuente gratuita con descanso. Pendiente de decidir si se paga (API-Football desde 19 $/mes) o se prescinde.
 - Muestras pequeñas al principio de temporada (4-9 partidos por equipo); la app avisa cuando hay menos de 5.
+- Escudos: la fuente no trae ninguno; la app muestra iniciales de color. Opciones estudiadas: TheSportsDB gratis no sirve (búsqueda limitada a 1 equipo, lista de 10); football-data.org trae escudos de unas pocas ligas pero necesita cuenta y clave (secreto del repo); pendiente de decidir con Juan.
 - Hora de los partidos: se asume hora británica (parece cuadrar con partidos reales). La jornada se estima (el CSV no la trae). Solo hay temporada actual (sin histórico de temporadas anteriores).
 - Los favoritos NO son apuestas de valor: son los mercados más probables y consistentes según los datos. Sin cuotas de la casa para ese mercado no se puede saber si hay valor. Lesiones y alineaciones: fuente sin datos; revisar a mano.
 - Valor esperado: teórico y basado en un Poisson simple (sin forma reciente, lesiones ni calidad del rival). No es una señal de apuesta; la pantalla lo avisa.
