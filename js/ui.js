@@ -1,3 +1,4 @@
+import { CRESTS } from './crests.js';
 export const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const I = {
   home: 'M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
@@ -23,7 +24,9 @@ export function dayLabel(iso) {
 export const crest = (team, big) => {
   const h = [...team.id].reduce((a, c) => a + c.charCodeAt(0) * 7, 0) % 360;
   const ini = team.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
-  return `<span class="crest${big ? ' lg' : ''}" style="--h:${h}">${esc(ini)}</span>`;
+  // Con escudo: imagen sobre fondo transparente; si no carga, se quita y quedan las iniciales de color.
+  const img = CRESTS.has(team.id) ? `<img src="${new URL(`../crests/${team.id}.png`, import.meta.url).href}" alt="" loading="lazy" onerror="this.parentNode.classList.remove('img');this.remove()">` : '';
+  return `<span class="crest${big ? ' lg' : ''}${img ? ' img' : ''}" style="--h:${h}">${img}${esc(ini)}</span>`;
 };
 
 export const matchRow = (m, league) => {

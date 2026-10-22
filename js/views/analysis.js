@@ -76,7 +76,7 @@ export const analisis = async ({ q }) => {
   if (past) list = await data.matches({ leagueId: lg || undefined, status: 'FT', limit: 30 });
   const href = l => `#/analisis${l ? '?l=' + encodeURIComponent(l) : ''}`;
   return `<h1>Análisis</h1>${analysisTabs('p')}<p class="mu">Elige un partido para ver la lectura, los mercados favoritos y las estimaciones del modelo Poisson.</p>${demoNote()}
-    ${past ? '<div class="demo">Ahora mismo no hay próximos partidos en la fuente (solo publica los de hoy y mañana). Te enseño los últimos jugados: el análisis usa solo los partidos anteriores a cada uno, como si estuvieras antes de empezar.</div>' : ''}
+    ${past ? '<div class="demo">La fuente de datos aún no ha publicado próximos partidos. Te enseño los últimos jugados: el análisis usa solo los partidos anteriores a cada uno, como si estuvieras antes de empezar.</div>' : ''}
     ${chips([[href(''), 'Todas', !lg], ...leagues.map(l => [href(l.id), l.name, lg === l.id])])}
     ${groupByDay(list, Object.fromEntries(leagues.map(l => [l.id, l.name]))).replace(/href="#\/partidos\//g, 'href="#/analisis/')}`;
 };
