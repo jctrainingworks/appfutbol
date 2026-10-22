@@ -39,7 +39,7 @@ h2{font-size:15px;font-weight:650;color:var(--mu);margin:22px 0 8px}
 .when small{color:var(--ac2);font-size:12px}
 .crest{--h:210;width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;flex:none;font-size:9px;font-weight:700;color:#fff;background:hsl(var(--h) 55% 28%);border:1px solid hsl(var(--h) 60% 52%)}
 .crest.lg{width:54px;height:54px;font-size:17px}
-.crest.img{font-size:0;background:rgba(255,255,255,.94);border:0;padding:8%}.crest.img img{width:100%;height:100%;object-fit:contain;display:block}
+.crest.img{font-size:0;background:rgba(255,255,255,.94);border:0;padding:3px}.crest.lg.img{padding:7px}.crest.img img{width:100%;height:100%;object-fit:contain;display:block}
 .match{display:grid;grid-template-columns:52px 1fr 26px;gap:10px;align-items:center;padding:11px 14px;border-top:1px solid var(--line)}
 .day+.match{border-top:0}
 .day{padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--mu);background:var(--s2)}
