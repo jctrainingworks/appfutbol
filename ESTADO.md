@@ -34,7 +34,7 @@ Inglaterra (Premier, Championship, League One, League Two), Escocia (Premiership
 - No probado: la web desplegada en un móvil real por parte de Claude (Juan sí la ve y ha dado el visto bueno al diseño); el Worker de Cloudflare (nunca desplegado); la primera ejecución de la Action sí funcionó (commit b96fa8e).
 
 ## 6. Límites conocidos
-- Próximos partidos: la fuente (fixtures.csv) solo publica los de hoy y mañana y solo de algunas ligas; a veces no hay ninguno. No hay marcadores en directo; los datos se actualizan unas 2 veces por semana en origen.
+- Próximos partidos: la fuente (fixtures.csv) solo publica los de hoy y mañana y solo de algunas ligas; a veces no hay ninguno. Cuando no hay ninguno, Análisis ofrece los últimos 30 partidos jugados (con aviso) para poder revisar la lectura. No hay marcadores en directo; los datos se actualizan unas 2 veces por semana en origen.
 - Noruega y otras ligas pequeñas: no hay fuente gratuita con descanso. Pendiente de decidir si se paga (API-Football desde 19 $/mes) o se prescinde.
 - Muestras pequeñas al principio de temporada (4-9 partidos por equipo); la app avisa cuando hay menos de 5.
 - Hora de los partidos: se asume hora británica (parece cuadrar con partidos reales). La jornada se estima (el CSV no la trae). Solo hay temporada actual (sin histórico de temporadas anteriores).
