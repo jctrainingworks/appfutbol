@@ -1,10 +1,10 @@
 name: Actualizar datos
 
 # Descarga los CSV de football-data.co.uk y los guarda en data/ (la app los lee de ahí).
-# Se ejecuta: al subir estos ficheros, una vez al día, y a mano desde la pestaña Actions.
+# Se ejecuta: al subir estos ficheros, cada 4 horas (solo guarda si hay cambios), y a mano desde la pestaña Actions.
 on:
   schedule:
-    - cron: '20 7 * * *'
+    - cron: '20 */4 * * *'
   workflow_dispatch:
   push:
     branches: [main]
