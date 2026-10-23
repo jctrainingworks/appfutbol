@@ -1,6 +1,6 @@
 // Calendario de próximos partidos desde fixturedownload.com (feed JSON público, uso personal).
 // football-data.co.uk publica sus próximos partidos tarde y solo de algunas ligas; esta fuente trae el calendario completo
-// (con hora UTC y jornada real) de 11 de nuestras ligas. Funciones puras salvo fetchFeed. Si algo falla, no se pierde nada:
+// (con hora UTC y jornada real) de 13 de nuestras ligas. Funciones puras salvo fetchFeed. Si algo falla, no se pierde nada:
 // se sigue usando lo de football-data.
 //
 // Problema principal: el mismo equipo se llama distinto en cada fuente ("Spurs" / "Tottenham", "Internazionale" / "Inter").
@@ -10,7 +10,7 @@
 
 export const SOURCE = 'fixturedownload.com';
 export const SLUGS = {
-  E0: 'epl-2026', E1: 'championship-2026', SP1: 'la-liga-2026', D1: 'bundesliga-2026', I1: 'serie-a-2026', F1: 'ligue-1-2026',
+  E0: 'epl-2026', E1: 'championship-2026', E2: 'efl-league-one-2026', E3: 'efl-league-two-2026', SP1: 'la-liga-2026', D1: 'bundesliga-2026', I1: 'serie-a-2026', F1: 'ligue-1-2026',
   F2: 'ligue-2-2026', N1: 'eredivisie-2026', SC0: 'scottish-premiership-2026', P1: 'primeira-liga-2026', T1: 'super-lig-2026',
 };
 export const feedUrl = code => `https://fixturedownload.com/feed/json/${SLUGS[code]}`;
