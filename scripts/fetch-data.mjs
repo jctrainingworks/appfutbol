@@ -4,6 +4,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { LEAGUES, seasonCode, resultsUrl, FIXTURES_URL, toObjects, buildLeague, SOURCE } from './football-data-csv.mjs';
+import { altFixtures, SOURCE as ALT_SOURCE } from './fixturedownload.mjs';
 
 async function get(fetchFn, url, tries = 3) {
   let err;
@@ -27,12 +28,17 @@ export async function run({ fetchFn = fetch, outDir = 'data', now = new Date(), 
   try { fixtures = toObjects(await get(fetchFn, FIXTURES_URL)); log(`fixtures.csv: ${fixtures.length} partidos`); }
   catch (e) { fxError = e.message; log(`AVISO fixtures.csv no disponible (${e.message}): sin próximos partidos`); }
   const prevIndex = await readJson(`${outDir}/index.json`);
-  const leagues = []; let ok = 0, changed = 0;
+  const leagues = []; let ok = 0, changed = 0; const altDiag = {};
   for (const l of LEAGUES) {
     const file = `${outDir}/${l.code}.json`;
     let data = null;
     try {
-      const built = buildLeague(l.code, await get(fetchFn, resultsUrl(season, l.code)), fixtures);
+      const resultsText = await get(fetchFn, resultsUrl(season, l.code));
+      let built = buildLeague(l.code, resultsText, fixtures);
+      // Próximos partidos de una segunda fuente (si falla, se queda lo de fixtures.csv). Necesita los equipos de la liga para casar nombres.
+      const alt = await altFixtures({ getText: u => get(fetchFn, u, 2), code: l.code, teams: built.teams, now });
+      if (alt.diag) altDiag[l.code] = alt.diag;
+      if (alt.fixtures.length) built = buildLeague(l.code, resultsText, fixtures, alt.fixtures);
       if (built.matches.some(m => m.status === 'FT')) {
         ok++;
         const prev = await readJson(file);
@@ -52,7 +58,7 @@ export async function run({ fetchFn = fetch, outDir = 'data', now = new Date(), 
   const fxDivs = [...new Set(fixtures.map(r => r.Div).filter(Boolean))].sort();
   const fxDates = fixtures.map(r => /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.exec(r.Date || '')).filter(Boolean).map(([, d, mo, y]) => `${+y < 100 ? 2000 + +y : y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`).sort();
   const today = now.toISOString().slice(0, 10);
-  const fx = { rows: fixtures.length, error: fxError, ligas: fxDivs, guardados: upcoming, desde: fxDates[0] || null, hasta: fxDates[fxDates.length - 1] || null, anterioresAHoy: fxDates.filter(d => d < today).length };
+  const fx = { rows: fixtures.length, error: fxError, ligas: fxDivs, guardados: upcoming, alt: { fuente: ALT_SOURCE, ligas: altDiag }, desde: fxDates[0] || null, hasta: fxDates[fxDates.length - 1] || null, anterioresAHoy: fxDates.filter(d => d < today).length };
   await writeFile(`${outDir}/index.json`, JSON.stringify({ source: SOURCE, season, updated, leagues, fixtures: fx }));
   log(`Próximos partidos: ${fixtures.length} filas en fixtures.csv, ${upcoming} guardados`);
   log(`Listo: ${ok} ligas descargadas (${changed} con cambios), ${leagues.length} disponibles`);

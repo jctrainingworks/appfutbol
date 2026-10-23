@@ -76,7 +76,9 @@ function toMatch(code, r, done) {
   return { id: `${code}-${ymd}-${home.id}-${away.id}`, leagueId: code, round: 0, kickoff, home, away, status: done ? 'FT' : 'NS', score, source: SOURCE, st, odds };
 }
 
-export function buildLeague(code, resultsText, fixtureRows = []) {
+// extra = próximos partidos ya convertidos de otra fuente (fixturedownload.com): traen hora real y jornada real, así que
+// sustituyen a los de fixtures.csv del mismo cruce; y se descartan si ese cruce ya está jugado (±3 días).
+export function buildLeague(code, resultsText, fixtureRows = [], extra = []) {
   const meta = LEAGUES.find(l => l.code === code) || { name: code, country: '' };
   const byId = new Map();
   for (const r of toObjects(resultsText)) { const m = toMatch(code, r, true); if (m) byId.set(m.id, m); }
@@ -86,6 +88,12 @@ export function buildLeague(code, resultsText, fixtureRows = []) {
   for (const r of fixtureRows.filter(x => x.Div === code)) {
     const m = toMatch(code, r, false);
     if (m && !byId.has(m.id)) { m.round = Math.max(cnt.get(m.home.id) || 0, cnt.get(m.away.id) || 0) + 1; next.push(m); }
+  }
+  const near = (x, y) => x.home.id === y.home.id && x.away.id === y.away.id && Math.abs(Date.parse(x.kickoff) - Date.parse(y.kickoff)) < 3 * 864e5;
+  for (const e of extra) {
+    if (played.some(m => near(m, e))) continue;
+    for (let i = next.length - 1; i >= 0; i--) if (near(next[i], e)) next.splice(i, 1);
+    if (!next.some(m => m.id === e.id)) next.push(e);
   }
   const matches = [...played, ...next].sort((a, b) => a.kickoff < b.kickoff ? -1 : 1);
   const teams = [...new Map(matches.flatMap(m => [m.home, m.away]).map(t => [t.id, t])).values()];
