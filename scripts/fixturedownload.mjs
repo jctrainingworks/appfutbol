@@ -34,6 +34,8 @@ const ALIAS_RAW = {
   'Fortuna Sittard': 'for-sittard', 'Heart of Midlothian': 'hearts', 'Vitória SC': 'guimaraes', 'Vitória SC Guimarães': 'guimaraes', 'Sporting CP': 'sp-lisbon',
   'Sporting Clube de Portugal': 'sp-lisbon', 'SC Braga': 'sp-braga', 'İstanbul Başakşehir': 'buyuksehyr', 'Istanbul Basaksehir': 'buyuksehyr',
   'Başakşehir': 'buyuksehyr', 'Amed SK': 'amedspor', 'Göztepe': 'goztep',
+  'MK Dons': 'milton-keynes-dons', 'Milton Keynes Dons': 'milton-keynes-dons', 'Sheffield Wednesday': 'sheffield-weds', 'Peterborough United': 'peterboro',
+  'Bristol Rovers': 'bristol-rvs',
 };
 export const ALIAS = Object.fromEntries(Object.entries(ALIAS_RAW).map(([k, v]) => [norm(k), v]));
 

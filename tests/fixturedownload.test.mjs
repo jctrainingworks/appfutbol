@@ -81,6 +81,13 @@ test('buildLeague: los próximos de la 2ª fuente sustituyen a fixtures.csv y no
   assert.equal(b.matches.filter(m => m.status === 'FT').length, 1);
 });
 
+test('E2/E3: alias de nombres que el parecido de letras no resuelve', () => {
+  const t = [{ id: 'milton-keynes-dons', name: 'Milton Keynes Dons' }, { id: 'sheffield-weds', name: 'Sheffield Weds' }, { id: 'peterboro', name: 'Peterboro' }, { id: 'bristol-rvs', name: 'Bristol Rvs' }, { id: 'bristol-city', name: 'Bristol City' }];
+  const { map, unmatched } = matchTeams(['MK Dons', 'Sheffield Wednesday', 'Peterborough United', 'Bristol Rovers', 'Bristol City'], t);
+  assert.deepEqual(unmatched, []);
+  assert.deepEqual(Object.fromEntries([...map].map(([f, x]) => [f, x.id])), { 'MK Dons': 'milton-keynes-dons', 'Sheffield Wednesday': 'sheffield-weds', 'Peterborough United': 'peterboro', 'Bristol Rovers': 'bristol-rvs', 'Bristol City': 'bristol-city' });
+});
+
 test('norm: acentos, ı turca y símbolos', () => {
   assert.equal(norm('Kasımpaşa'), 'kasimpasa');
   assert.equal(norm("Nott'm Forest"), 'nott m forest');
