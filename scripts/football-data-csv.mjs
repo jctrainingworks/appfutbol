@@ -92,7 +92,10 @@ export function buildLeague(code, resultsText, fixtureRows = [], extra = []) {
   const near = (x, y) => x.home.id === y.home.id && x.away.id === y.away.id && Math.abs(Date.parse(x.kickoff) - Date.parse(y.kickoff)) < 3 * 864e5;
   for (const e of extra) {
     if (played.some(m => near(m, e))) continue;
-    for (let i = next.length - 1; i >= 0; i--) if (near(next[i], e)) next.splice(i, 1);
+    for (let i = next.length - 1; i >= 0; i--) if (near(next[i], e)) {
+      const old = next.splice(i, 1)[0];  // las cuotas y estadísticas que ya traía fixtures.csv no se pierden
+      if (!Object.keys(e.odds || {}).length && old.odds) e.odds = old.odds;
+    }
     if (!next.some(m => m.id === e.id)) next.push(e);
   }
   const matches = [...played, ...next].sort((a, b) => a.kickoff < b.kickoff ? -1 : 1);

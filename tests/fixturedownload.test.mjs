@@ -88,6 +88,17 @@ test('E2/E3: alias de nombres que el parecido de letras no resuelve', () => {
   assert.deepEqual(Object.fromEntries([...map].map(([f, x]) => [f, x.id])), { 'MK Dons': 'milton-keynes-dons', 'Sheffield Wednesday': 'sheffield-weds', 'Peterborough United': 'peterboro', 'Bristol Rovers': 'bristol-rvs', 'Bristol City': 'bristol-city' });
 });
 
+test('buildLeague: al sustituir un próximo de fixtures.csv se conservan sus cuotas', () => {
+  const csv = 'Div,Date,Time,HomeTeam,AwayTeam,FTHG,FTAG\nSP1,15/08/2026,20:00,Alaves,Getafe,1,0\n';
+  const fdFix = [{ Div: 'SP1', Date: '24/10/2026', Time: '21:00', HomeTeam: 'Getafe', AwayTeam: 'Alaves', B365H: '2.1', B365D: '3.3', B365A: '3.6', 'B365>2.5': '1.9', 'B365<2.5': '1.95' }];
+  const extra = [{ id: 'SP1-20261024-getafe-alaves', leagueId: 'SP1', round: 10, kickoff: '2026-10-24T19:00:00.000Z', home: { id: 'getafe', name: 'Getafe' }, away: { id: 'alaves', name: 'Alaves' }, status: 'NS', score: null, source: 'x', st: {}, odds: {} }];
+  const ns = buildLeague('SP1', csv, fdFix, extra).matches.filter(m => m.status === 'NS');
+  assert.equal(ns.length, 1);
+  assert.deepEqual(ns[0].odds.b365, [2.1, 3.3, 3.6]);
+  assert.deepEqual(ns[0].odds.ou25, [1.9, 1.95]);
+  assert.equal(ns[0].round, 10);
+});
+
 test('norm: acentos, ı turca y símbolos', () => {
   assert.equal(norm('Kasımpaşa'), 'kasimpasa');
   assert.equal(norm("Nott'm Forest"), 'nott m forest');

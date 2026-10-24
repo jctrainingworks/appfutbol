@@ -52,6 +52,21 @@ export async function run({ fetchFn = fetch, outDir = 'data', now = new Date(), 
   }
   if (!leagues.length) throw new Error('No hay datos de ninguna liga');
   if (!ok) throw new Error('No se pudo descargar ninguna liga nueva');
+  // Temporada anterior de cada liga: da muestras mayores a tendencias y modelo (sobre todo a principio de temporada).
+  // Es histórico: se descarga una sola vez y se guarda en data/prev/<liga>.json (solo partidos jugados).
+  const prevSeason = seasonCode(new Date(Date.UTC(now.getUTCFullYear() - 1, now.getUTCMonth(), now.getUTCDate())));
+  const prevDiag = {};
+  await mkdir(`${outDir}/prev`, { recursive: true });
+  for (const l of LEAGUES) {
+    const pf = `${outDir}/prev/${l.code}.json`, have = await readJson(pf);
+    if (have && have.season === prevSeason && have.matches?.length) { prevDiag[l.code] = have.matches.length; continue; }
+    try {
+      const played = buildLeague(l.code, await get(fetchFn, resultsUrl(prevSeason, l.code), 2)).matches.filter(m => m.status === 'FT');
+      if (played.length) await writeFile(pf, JSON.stringify({ season: prevSeason, id: l.code, matches: played }));
+      prevDiag[l.code] = played.length;
+    } catch (e) { prevDiag[l.code] = `error: ${String(e.message).slice(0, 60)}`; }
+  }
+  log(`Temporada anterior (${prevSeason}): ` + Object.entries(prevDiag).map(([k, v]) => `${k}=${v}`).join(' '));
   const updated = changed || !prevIndex?.updated ? now.toISOString() : prevIndex.updated; // última vez que cambió algún dato
   // Diagnóstico de próximos partidos: filas que trae fixtures.csv, error de descarga (si lo hubo) y cuántos se guardaron.
   const upcoming = leagues.reduce((n, l) => n + (l.upcoming || 0), 0);
@@ -59,7 +74,7 @@ export async function run({ fetchFn = fetch, outDir = 'data', now = new Date(), 
   const fxDates = fixtures.map(r => /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.exec(r.Date || '')).filter(Boolean).map(([, d, mo, y]) => `${+y < 100 ? 2000 + +y : y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`).sort();
   const today = now.toISOString().slice(0, 10);
   const fx = { rows: fixtures.length, error: fxError, ligas: fxDivs, guardados: upcoming, alt: { fuente: ALT_SOURCE, ligas: altDiag }, desde: fxDates[0] || null, hasta: fxDates[fxDates.length - 1] || null, anterioresAHoy: fxDates.filter(d => d < today).length };
-  await writeFile(`${outDir}/index.json`, JSON.stringify({ source: SOURCE, season, updated, leagues, fixtures: fx }));
+  await writeFile(`${outDir}/index.json`, JSON.stringify({ source: SOURCE, season, updated, leagues, fixtures: fx, prev: { season: prevSeason, partidos: prevDiag } }));
   log(`Próximos partidos: ${fixtures.length} filas en fixtures.csv, ${upcoming} guardados`);
   log(`Listo: ${ok} ligas descargadas (${changed} con cambios), ${leagues.length} disponibles`);
   return { ok, leagues };
