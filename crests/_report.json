@@ -1,0 +1,290 @@
+{
+ "afc-wimbledon": {
+  "ok": true,
+  "slug": "afc-wimbledon",
+  "de": "/dls/logo/rgba-v1/afc-wimbledon.png",
+  "bytes": 81006
+ },
+ "barnsley": {
+  "ok": true,
+  "slug": "barnsley",
+  "de": "/dls/logo/rgba-v1/barnsley.png",
+  "bytes": 227653
+ },
+ "blackpool": {
+  "ok": true,
+  "slug": "blackpool",
+  "de": "/dls/logo/rgba-v1/blackpool.png",
+  "bytes": 180064
+ },
+ "bradford": {
+  "ok": true,
+  "slug": "bradford-city",
+  "de": "/dls/logo/rgba-v1/bradford-city.png",
+  "bytes": 83374
+ },
+ "bromley": {
+  "ok": true,
+  "slug": "bromley",
+  "de": "/dls/logo/rgba-v1/bromley.png",
+  "bytes": 153843
+ },
+ "burton": {
+  "ok": true,
+  "slug": "burton-albion",
+  "de": "/dls/logo/rgba-v1/burton-albion.png",
+  "bytes": 117159
+ },
+ "cambridge": {
+  "ok": true,
+  "slug": "cambridge-united",
+  "de": "/dls/logo/rgba-v1/cambridge-united.png",
+  "bytes": 44377
+ },
+ "doncaster": {
+  "ok": true,
+  "slug": "doncaster-rovers",
+  "de": "/dls/logo/rgba-v1/doncaster-rovers.png",
+  "bytes": 120427
+ },
+ "huddersfield": {
+  "ok": true,
+  "slug": "huddersfield-town",
+  "de": "/dls/logo/rgba-v1/huddersfield-town.png",
+  "bytes": 180613
+ },
+ "leicester": {
+  "ok": true,
+  "slug": "leicester",
+  "de": "/dls/logo/rgba-v1/leicester.png",
+  "bytes": 159764
+ },
+ "leyton-orient": {
+  "ok": true,
+  "slug": "leyton-orient",
+  "de": "/dls/logo/rgba-v1/leyton-orient.png",
+  "bytes": 166657
+ },
+ "luton": {
+  "ok": true,
+  "slug": "luton-town",
+  "de": "/dls/logo/rgba-v1/luton-town.png",
+  "bytes": 121679
+ },
+ "mansfield": {
+  "ok": true,
+  "slug": "mansfield-town",
+  "de": "/dls/logo/rgba-v1/mansfield-town.png",
+  "bytes": 53027
+ },
+ "milton-keynes-dons": {
+  "ok": true,
+  "slug": "milton-keynes-dons",
+  "de": "/dls/logo/rgba-v1/milton-keynes-dons.png",
+  "bytes": 113793
+ },
+ "notts-county": {
+  "ok": true,
+  "slug": "notts-county",
+  "de": "/dls/logo/rgba-v1/notts-county.png",
+  "bytes": 72498
+ },
+ "oxford": {
+  "ok": true,
+  "slug": "oxford-united",
+  "de": "/dls/logo/rgba-v1/oxford-united.png",
+  "bytes": 76356
+ },
+ "peterboro": {
+  "ok": true,
+  "slug": "peterborough-united",
+  "de": "/dls/logo/rgba-v1/peterborough-united.png",
+  "bytes": 49118
+ },
+ "plymouth": {
+  "ok": true,
+  "slug": "plymouth-argyle",
+  "de": "/dls/logo/rgba-v1/plymouth-argyle.png",
+  "bytes": 114353
+ },
+ "reading": {
+  "ok": true,
+  "slug": "reading-fc",
+  "de": "/dls/logo/rgba-v1/reading-fc.png",
+  "bytes": 136241
+ },
+ "sheffield-weds": {
+  "ok": true,
+  "slug": "sheffield-wednesday",
+  "de": "/dls/logo/rgba-v1/sheffield-wednesday.png",
+  "bytes": 46915
+ },
+ "stevenage": {
+  "ok": true,
+  "slug": "stevenage",
+  "de": "/dls/logo/rgba-v1/stevenage.png",
+  "bytes": 126589
+ },
+ "stockport": {
+  "ok": true,
+  "slug": "stockport-county",
+  "de": "/dls/logo/rgba-v1/stockport-county.png",
+  "bytes": 180523
+ },
+ "wigan": {
+  "ok": true,
+  "slug": "wigan-athletic",
+  "de": "/dls/logo/rgba-v1/wigan-athletic.png",
+  "bytes": 120074
+ },
+ "wycombe": {
+  "ok": true,
+  "slug": "wycombe-wanderers",
+  "de": "/dls/logo/rgba-v1/wycombe-wanderers.png",
+  "bytes": 133068
+ },
+ "accrington": {
+  "ok": true,
+  "slug": "accrington-stanley",
+  "de": "/dls/logo/rgba-v1/accrington-stanley.png",
+  "bytes": 184862
+ },
+ "barnet": {
+  "ok": true,
+  "slug": "barnet",
+  "de": "/dls/logo/rgba-v1/barnet.png",
+  "bytes": 152594
+ },
+ "bristol-rvs": {
+  "ok": true,
+  "slug": "bristol-rovers",
+  "de": "/dls/logo/rgba-v1/bristol-rovers.png",
+  "bytes": 111300
+ },
+ "cheltenham": {
+  "ok": true,
+  "slug": "cheltenham-town",
+  "de": "/dls/logo/rgba-v1/cheltenham-town.png",
+  "bytes": 38396
+ },
+ "chesterfield": {
+  "ok": true,
+  "slug": "chesterfield",
+  "de": "/dls/logo/rgba-v1/chesterfield.png",
+  "bytes": 105060
+ },
+ "colchester": {
+  "ok": true,
+  "slug": "colchester-united",
+  "de": "/dls/logo/rgba-v1/colchester-united.png",
+  "bytes": 108298
+ },
+ "crawley-town": {
+  "ok": true,
+  "slug": "crawley-town",
+  "de": "/dls/logo/rgba-v1/crawley-town.png",
+  "bytes": 114256
+ },
+ "crewe": {
+  "ok": true,
+  "slug": "crewe-alexandra",
+  "de": "/dls/logo/rgba-v1/crewe-alexandra.png",
+  "bytes": 109048
+ },
+ "exeter": {
+  "ok": true,
+  "slug": "exeter-city",
+  "de": "/dls/logo/rgba-v1/exeter-city.png",
+  "bytes": 119329
+ },
+ "fleetwood-town": {
+  "ok": true,
+  "slug": "fleetwood-town",
+  "de": "/dls/logo/rgba-v1/fleetwood-town.png",
+  "bytes": 91166
+ },
+ "gillingham": {
+  "ok": true,
+  "slug": "gillingham",
+  "de": "/dls/logo/rgba-v1/gillingham.png",
+  "bytes": 66516
+ },
+ "grimsby": {
+  "ok": true,
+  "slug": "grimsby-town",
+  "de": "/dls/logo/rgba-v1/grimsby-town.png",
+  "bytes": 75365
+ },
+ "newport-county": {
+  "ok": true,
+  "slug": "newport-county",
+  "de": "/dls/logo/rgba-v1/newport-county.png",
+  "bytes": 94732
+ },
+ "northampton": {
+  "ok": true,
+  "slug": "northampton-town",
+  "de": "/dls/logo/rgba-v1/northampton-town.png",
+  "bytes": 151280
+ },
+ "oldham": {
+  "ok": true,
+  "slug": "oldham-athletic",
+  "de": "/dls/logo/rgba-v1/oldham-athletic.png",
+  "bytes": 70091
+ },
+ "port-vale": {
+  "ok": true,
+  "slug": "port-vale-fc",
+  "de": "/dls/logo/rgba-v1/port-vale-fc.png",
+  "bytes": 111879
+ },
+ "rochdale": {
+  "ok": true,
+  "slug": "rochdale",
+  "de": "/dls/logo/rgba-v1/rochdale.png",
+  "bytes": 153425
+ },
+ "rotherham": {
+  "ok": true,
+  "slug": "rotherham-united",
+  "de": "/dls/logo/rgba-v1/rotherham-united.png",
+  "bytes": 83294
+ },
+ "salford": {
+  "ok": true,
+  "slug": "salford-city",
+  "de": "/dls/logo/rgba-v1/salford-city.png",
+  "bytes": 124554
+ },
+ "shrewsbury": {
+  "ok": true,
+  "slug": "shrewsbury-town",
+  "de": "/dls/logo/rgba-v1/shrewsbury-town.png",
+  "bytes": 169169
+ },
+ "swindon": {
+  "ok": true,
+  "slug": "swindon-town",
+  "de": "/dls/logo/rgba-v1/swindon-town.png",
+  "bytes": 126319
+ },
+ "tranmere": {
+  "ok": true,
+  "slug": "tranmere-rovers",
+  "de": "/dls/logo/rgba-v1/tranmere-rovers.png",
+  "bytes": 150439
+ },
+ "walsall": {
+  "ok": true,
+  "slug": "walsall",
+  "de": "/dls/logo/rgba-v1/walsall.png",
+  "bytes": 85337
+ },
+ "york": {
+  "ok": true,
+  "slug": "york-city",
+  "de": "/dls/logo/rgba-v1/york-city.png",
+  "bytes": 85163
+ }
+}
