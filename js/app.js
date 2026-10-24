@@ -12,6 +12,7 @@ const ROUTES = [['', home], ['ligas', ligas], ['ligas/:id', liga], ['partidos', 
   ['analisis', p => p.q.get('t') === 'mercados' ? mercados(p) : analisis(p)], ['analisis/:id', analisisPartido], ['combinadas', soon('combinadas')], ['historial', soon('historial')]];
 
 const $ = s => document.querySelector(s);
+const CREDITS = '<p class="credits">Escudos: <a href="https://www.footylogos.com" target="_blank" rel="noopener">FootyLogos.com</a> y football-logos.cc, propiedad de sus clubes · Datos: football-data.co.uk y fixturedownload.com · Uso personal</p>';
 $('#nav').innerHTML = NAV.map(([p, l, i]) => `<a href="#/${p}" data-p="${p}">${icon(i)}<span>${l}</span></a>`).join('');
 $('#src').textContent = data.meta.isDemo ? 'DEMO' : data.meta.label;
 $('#src').hidden = !data.meta.isDemo;
@@ -37,6 +38,7 @@ async function render() {
     console.error(e);
     $('#view').innerHTML = `<div class="card empty">No se pudo cargar esta sección: ${esc(e.message)}</div>`;
   }
+  $('#view').insertAdjacentHTML('beforeend', CREDITS);
   scrollTo(0, 0);
 }
 

@@ -1,0 +1,13 @@
+{
+  "_nota": "id del equipo en data/<liga>.json -> nombre interno en footylogos.com. Solo se descargan los que aún no están en crests/. Editar y subir para que GitHub descargue los nuevos.",
+  "afc-wimbledon": "afc-wimbledon", "barnsley": "barnsley", "blackpool": "blackpool", "bradford": "bradford-city", "bromley": "bromley",
+  "burton": "burton-albion", "cambridge": "cambridge-united", "doncaster": "doncaster-rovers", "huddersfield": "huddersfield-town", "leicester": "leicester",
+  "leyton-orient": "leyton-orient", "luton": "luton-town", "mansfield": "mansfield-town", "milton-keynes-dons": "milton-keynes-dons", "notts-county": "notts-county",
+  "oxford": "oxford-united", "peterboro": "peterborough-united", "plymouth": "plymouth-argyle", "reading": "reading-fc", "sheffield-weds": "sheffield-wednesday",
+  "stevenage": "stevenage", "stockport": "stockport-county", "wigan": "wigan-athletic", "wycombe": "wycombe-wanderers",
+  "accrington": "accrington-stanley", "barnet": "barnet", "bristol-rvs": "bristol-rovers", "cheltenham": "cheltenham-town", "chesterfield": "chesterfield",
+  "colchester": "colchester-united", "crawley-town": "crawley-town", "crewe": "crewe-alexandra", "exeter": "exeter-city", "fleetwood-town": "fleetwood-town",
+  "gillingham": "gillingham", "grimsby": "grimsby-town", "newport-county": "newport-county", "northampton": "northampton-town", "oldham": "oldham-athletic",
+  "port-vale": "port-vale-fc", "rochdale": "rochdale", "rotherham": "rotherham-united", "salford": "salford-city", "shrewsbury": "shrewsbury-town",
+  "swindon": "swindon-town", "tranmere": "tranmere-rovers", "walsall": "walsall", "york": "york-city"
+}

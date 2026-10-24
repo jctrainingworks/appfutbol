@@ -114,3 +114,4 @@ h2{font-size:15px;font-weight:650;color:var(--mu);margin:22px 0 8px}
 .favm{font-size:18px;font-weight:700;margin:8px 0 4px;letter-spacing:-.2px}
 .favs{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin-bottom:6px;font-size:13.5px;color:var(--mu)}.favs>b{font-size:26px;color:var(--tx);font-variant-numeric:tabular-nums}
 .cav{margin:10px 0 4px;padding-left:18px}
+.credits{margin:28px 0 0;font-size:11.5px;line-height:1.5;color:var(--mu);text-align:center}.credits a{text-decoration:underline}

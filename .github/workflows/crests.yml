@@ -1,0 +1,45 @@
+name: Descargar escudos
+
+# Descarga puntual de escudos (footylogos.com) para los equipos de scripts/crest-sources.json que aún no tienen imagen.
+# Se ejecuta al subir ese fichero o a mano desde la pestaña Actions.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/crest-sources.json'
+      - 'scripts/fetch-crests.mjs'
+      - '.github/workflows/crests.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crests
+  cancel-in-progress: false
+
+jobs:
+  crests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar sharp (no se guarda en el repositorio)
+        run: npm install --no-save --no-package-lock sharp
+      - name: Descargar escudos
+        run: node scripts/fetch-crests.mjs
+      - name: Guardar cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add crests js/crests.js
+          if git diff --cached --quiet; then
+            echo "Sin cambios en los escudos"
+          else
+            git commit -m "Escudos descargados de footylogos.com"
+            git pull --rebase
+            git push
+          fi

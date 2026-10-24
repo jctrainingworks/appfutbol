@@ -26,3 +26,6 @@ Alternativas ya preparadas: `provider: 'footballdata'` (API con clave vía `work
 
 ## Probar en local
 `python3 -m http.server 8000` y abrir http://localhost:8000
+
+## Créditos de los escudos
+Los escudos son marcas de sus clubes y se usan solo para identificar equipos en esta app personal. Proceden de FootyLogos.com (https://www.footylogos.com) y football-logos.cc. Descargar un archivo no concede licencia de marca: no usar con fines comerciales.
