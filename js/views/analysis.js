@@ -2,6 +2,8 @@ import { data } from '../data/index.js';
 import { fairOdds, expectedValue } from '../model/poisson.js';
 import { SMOOTH } from '../model/trends.js';
 import { analyze } from '../model/analyze.js';
+import { upsertBet } from '../model/bets.js';
+import { loadBets, saveBets } from '../betstore.js';
 import { esc, crest, fmtTime, dayLabel, groupByDay, chips, empty, analysisTabs } from '../ui.js';
 
 const pc = p => (p * 100).toFixed(1).replace('.', ',') + '%';
@@ -61,10 +63,10 @@ function verdictHtml(pr, m) {
 // ---- Calculadora de valor: cuota justa, cuota mínima con valor y valor esperado con TU cuota (se guarda en el móvil) ----
 const MIN_EDGE = 1.05; // se pide al menos un 5% sobre la cuota justa para llamarlo "valor": margen de error del modelo
 const calcRows = (pr, m) => [
-  [`1 · ${m.home.name}`, pr.p1, 'b365:0'], ['X · Empate', pr.pX, 'b365:1'], [`2 · ${m.away.name}`, pr.p2, 'b365:2'],
-  ['1X', pr.dc['1X']], ['X2', pr.dc['X2']], ['12', pr.dc['12']],
-  ['Más de 1,5 goles', pr.over['1.5']], ['Más de 2,5 goles', pr.over['2.5'], 'ou25:0'], ['Menos de 2,5 goles', pr.under['2.5'], 'ou25:1'], ['Más de 3,5 goles', pr.over['3.5']],
-  ['Ambos marcan: Sí', pr.btts.si], ['Ambos marcan: No', pr.btts.no],
+  [`1 · ${m.home.name}`, pr.p1, 'b365:0', '1'], ['X · Empate', pr.pX, 'b365:1', 'X'], [`2 · ${m.away.name}`, pr.p2, 'b365:2', '2'],
+  ['1X', pr.dc['1X'], null, '1X'], ['X2', pr.dc['X2'], null, 'X2'], ['12', pr.dc['12'], null, '12'],
+  ['Más de 1,5 goles', pr.over['1.5'], null, 'o15'], ['Más de 2,5 goles', pr.over['2.5'], 'ou25:0', 'o25'], ['Menos de 2,5 goles', pr.under['2.5'], 'ou25:1', 'u25'], ['Más de 3,5 goles', pr.over['3.5'], null, 'o35'],
+  ['Ambos marcan: Sí', pr.btts.si, null, 'btts'], ['Ambos marcan: No', pr.btts.no, null, 'nobtts'],
 ];
 const LS = 'futbol-cuotas-v1';
 const store = { get() { try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch { return {}; } }, set(o) { try { localStorage.setItem(LS, JSON.stringify(o)); } catch { /* sin almacenamiento */ } } };
@@ -72,24 +74,41 @@ const evBadge = (p, od) => { const ev = expectedValue(p, od); return `<b class="
 
 function calcHtml(pr, m, bt) {
   const saved = store.get()[m.id] || {}, o = m.odds || {};
-  const rows = calcRows(pr, m).map(([label, p, src], i) => {
+  const canBet = m.status !== 'FT';   // solo se registran apuestas de partidos que aún no se han jugado
+  const rows = calcRows(pr, m).map(([label, p, src, key], i) => {
     const [k, j] = (src || '').split(':'), auto = k && o[k] ? o[k][+j] : null, val = saved[i] ?? auto ?? '';
-    return `<tr data-p="${p}"><td class="l">${esc(label)}</td><td><b>${pct0(p)}</b><small>@ ${odd(p)}</small></td><td class="mn">${dec(fairOdds(p) * MIN_EDGE)}</td>
-      <td><input class="oi" inputmode="decimal" placeholder="cuota" data-m="${esc(m.id)}" data-i="${i}" value="${val === '' ? '' : String(val).replace('.', ',')}" aria-label="Cuota para ${esc(label)}"></td><td class="ev-c">${val === '' ? '–' : evBadge(p, +val)}</td></tr>`;
+    return `<tr data-p="${p}" data-key="${key}" data-label="${esc(label)}"><td class="l">${esc(label)}</td><td><b>${pct0(p)}</b><small>@ ${odd(p)}</small></td><td class="mn">${dec(fairOdds(p) * MIN_EDGE)}</td>
+      <td><input class="oi" inputmode="decimal" placeholder="cuota" data-m="${esc(m.id)}" data-i="${i}" value="${val === '' ? '' : String(val).replace('.', ',')}" aria-label="Cuota para ${esc(label)}"></td><td class="ev-c"><span class="evv">${val === '' ? '–' : evBadge(p, +val)}</span>${canBet ? `<button type="button" class="bet-add" aria-label="Registrar apuesta: ${esc(label)}" title="Registrar esta apuesta"${val === '' ? ' hidden' : ''}>＋</button>` : ''}</td></tr>`;
   }).join('');
   const warn = bt && !bt.beatsBase ? 'En esta muestra el modelo NO mejora a la base ingenua en 1X2: no uses estos valores.' : 'Modelo simple, sin lesiones ni alineaciones: un valor positivo es una pista para investigar, no una apuesta rentable asegurada.';
-  return `<div class="card tw"><table class="tbl calc"><thead><tr><th class="l">Mercado</th><th>Prob.<small>cuota justa</small></th><th>Mín.<small>con valor</small></th><th>Tu cuota</th><th>Valor</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="mu" style="margin-top:6px"><b>Cuota mín. valor</b> = cuota justa + 5%: por debajo de eso no compensa el error del modelo. Escribe la cuota que ves en tu casa de apuestas (se guarda en este móvil) y verás el valor esperado teórico (prob. × cuota − 1). Las cuotas Bet365 de la fuente aparecen ya rellenas cuando existen. ${warn}</p>`;
+  return `<div class="card tw"><table class="tbl calc" data-m="${esc(m.id)}" data-l="${esc(m.leagueId)}" data-k="${esc(m.kickoff)}" data-hid="${esc(m.home.id)}" data-hn="${esc(m.home.name)}" data-aid="${esc(m.away.id)}" data-an="${esc(m.away.name)}"><thead><tr><th class="l">Mercado</th><th>Prob.<small>cuota justa</small></th><th>Mín.<small>con valor</small></th><th>Tu cuota</th><th>Valor</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="mu" style="margin-top:6px"><b>Cuota mín. valor</b> = cuota justa + 5%: por debajo de eso no compensa el error del modelo. Escribe la cuota que ves en tu casa de apuestas (se guarda en este móvil) y verás el valor esperado teórico (prob. × cuota − 1). Las cuotas Bet365 de la fuente aparecen ya rellenas cuando existen. ${warn}</p>
+    ${canBet ? '<p class="mu bet-note" role="status">Si apuestas de verdad, pulsa ＋ junto a tu cuota: queda registrada en Historial → Mis apuestas (importe 1 unidad, lo cambias allí) y se comprueba sola con el resultado.</p>' : ''}`;
 }
 
 // Una sola escucha: recalcula el valor al escribir una cuota y la guarda.
 if (typeof document !== 'undefined') document.addEventListener('input', e => {
   const el = e.target; if (!el.classList || !el.classList.contains('oi')) return;
-  const tr = el.closest('tr'), p = +tr.dataset.p, v = parseFloat(el.value.replace(',', '.')), cellEv = tr.querySelector('.ev-c');
-  cellEv.innerHTML = v > 1 ? evBadge(p, v) : '–';
+  const tr = el.closest('tr'), p = +tr.dataset.p, v = parseFloat(el.value.replace(',', '.'));
+  tr.querySelector('.evv').innerHTML = v > 1 ? evBadge(p, v) : '–';
+  const btn = tr.querySelector('.bet-add');
+  if (btn) { btn.hidden = !(v > 1); btn.textContent = '＋'; btn.classList.remove('on'); }
   const all = store.get(), cur = all[el.dataset.m] || {};
   if (v > 1) cur[el.dataset.i] = v; else delete cur[el.dataset.i];
   all[el.dataset.m] = cur; store.set(all);
+});
+
+// Registrar una apuesta real: guarda partido, mercado, tu cuota y la probabilidad que daba el modelo (en este móvil).
+if (typeof document !== 'undefined') document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('.bet-add'); if (!b) return;
+  const tr = b.closest('tr'), d = tr.closest('table').dataset, odds = parseFloat(tr.querySelector('.oi').value.replace(',', '.')), note = document.querySelector('.bet-note');
+  if (!(odds > 1)) return;
+  const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+  const bet = { id, mid: d.m, l: d.l, k: d.k, h: { id: d.hid, name: d.hn }, a: { id: d.aid, name: d.an }, key: tr.dataset.key, label: tr.dataset.label, odds, stake: 1, p: +tr.dataset.p, t: new Date().toISOString() };
+  const { list, updated } = upsertBet(loadBets(), bet);
+  const ok = saveBets(list);
+  b.textContent = ok ? '✓' : '!'; b.classList.toggle('on', ok);
+  if (note) note.textContent = ok ? `${updated ? 'Apuesta actualizada' : 'Apuesta registrada'}: ${bet.label} a ${String(odds).replace('.', ',')}. La ves y puedes cambiar el importe en Historial → Mis apuestas.` : 'No se pudo guardar: el navegador bloquea el almacenamiento (¿ventana privada?).';
 });
 
 const fold = (title, body, open = false) => `<details class="fold"${open ? ' open' : ''}><summary>${title}</summary>${body}</details>`;

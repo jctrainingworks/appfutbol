@@ -3,6 +3,7 @@
 import { data } from '../data/index.js';
 import { MODEL_VERSION, VALUE_EV, VOID_DAYS, summarize, result1x2 } from '../model/history.js';
 import { esc, chips, empty } from '../ui.js';
+import { misApuestas } from './mybets.js';
 
 const num = (x, d = 3) => x == null ? '–' : x.toFixed(d).replace('.', ',');
 const pc0 = p => p == null ? '–' : Math.round(p * 100) + '%';
@@ -82,10 +83,10 @@ function statsHtml(s) {
 }
 
 export const historial = async ({ q }) => {
-  const head = '<h1>Historial</h1><p class="mu">¿Acierta el modelo de verdad? Antes de cada partido se guarda lo que decía (probabilidades, favoritos y cuotas de ese momento) y cuando termina se compara con lo que pasó. Se guardan todos los próximos partidos, no solo los que parecen buenos.</p>';
+  const head = '<h1>Historial</h1><p class="mu">Tus apuestas reales y, más abajo, si el modelo acierta de verdad: antes de cada partido se guarda lo que decía (probabilidades, favoritos y cuotas de ese momento) y cuando termina se compara con lo que pasó. Se guardan todos los próximos partidos, no solo los que parecen buenos.</p>';
   if (data.meta.isDemo) return `${head}${empty('Con datos de demostración no hay historial: solo se guarda con datos reales.')}`;
-  const hist = await load();
-  if (!hist || !hist.records.length) return `${head}${empty('Todavía no hay pronósticos guardados. La tarea automática (cada 4 horas) empezará a guardarlos con los próximos partidos y aparecerán aquí.')}`;
+  const mine = await misApuestas(), hist = await load();
+  if (!hist || !hist.records.length) return `${head}${mine}<h2>Pronósticos del modelo</h2>${empty('Todavía no hay pronósticos guardados. La tarea automática (cada 4 horas) empezará a guardarlos con los próximos partidos y aparecerán aquí.')}`;
   const lg = q.get('l') || '', leagues = await data.leagues(), names = Object.fromEntries(leagues.map(l => [l.id, l.name]));
   const recs = hist.records, inLg = [...new Set(recs.map(r => r.l))].filter(id => names[id]);
   const s = summarize(recs, { league: lg || null }), href = l => `#/historial${l ? '?l=' + encodeURIComponent(l) : ''}`;
@@ -104,5 +105,5 @@ export const historial = async ({ q }) => {
     ${todo.length ? `<h2>Próximos con pronóstico guardado</h2><div class="card list">${todo.map(r => rowHtml(r, lg ? '' : names[r.l])).join('')}</div>` : ''}`;
   const how = `<details class="fold"><summary>Cómo se calcula</summary><p class="mu">Cada 4 horas, tras actualizar los datos, la tarea de GitHub recorre los partidos que aún no han empezado y guarda su pronóstico con el mismo código que usa la pantalla Análisis, solo con partidos anteriores. Mientras el partido no empieza, el pronóstico se refresca con los datos y cuotas más recientes; al empezar queda congelado. Cuando aparece el resultado se anota y se comprueba cada favorito. No hay pronósticos retroactivos.</p>
     <p class="mu">Las cuotas Bet365 solo existen para 1X2 y más/menos 2,5 y no para todos los partidos; por eso el mercado y las apuestas de valor usan menos partidos que el resto. Lesiones y alineaciones no están en la fuente: el modelo no las conoce.</p></details>`;
-  return `${head}${filt}${summary}${body}${lists}${how}`;
+  return `${head}${mine}<h2>Pronósticos del modelo</h2>${filt}${summary}${body}${lists}${how}`;
 };
