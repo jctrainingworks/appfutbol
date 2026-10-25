@@ -42,10 +42,58 @@ function insightHtml(ins) {
     ${ins.flags.length ? `<ul class="flags">${ins.flags.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
     ${ins.topTrend ? `<p class="mu">Patrón más marcado: <b>${esc(ins.topTrend.label)}</b> (${pct0(ins.topTrend.avg)}, ${Math.round(ins.topTrend.edge * 100) >= 0 ? '+' : ''}${Math.round(ins.topTrend.edge * 100)} pts sobre la media de la liga).</p>` : ''}</div>
     <h2>Mercados favoritos</h2>
-    ${ins.favorites.length ? `<div class="grid">${ins.favorites.map(fav).join('')}</div>` : empty('Ningún mercado cumple los filtros (probabilidad ≥ 55%, muestra suficiente y tendencia y modelo de acuerdo). Mejor no forzar.')}
+    ${ins.favorites.length ? `<div class="grid">${ins.favorites.map(fav).join('')}</div>` : empty('Ningún mercado cumple los filtros (probabilidad entre 55% y 80%, muestra suficiente y tendencia y modelo de acuerdo). Mejor no forzar.')}
     <ul class="mu cav">${ins.caveats.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
     <p class="mu">Son frecuencias pasadas y un modelo simple, no una garantía ni una recomendación de apuesta.</p>`;
 }
+
+// ---- Veredicto de un vistazo (arriba del todo) ----
+function verdictHtml(pr, m) {
+  const seg = [['1', pr.p1, 'h'], ['X', pr.pX, 'x'], ['2', pr.p2, 'a']];
+  const best = seg.reduce((a, b) => b[1] > a[1] ? b : a);
+  return `<div class="card verdict"><div class="vt">Probabilidad del modelo (1X2)</div>
+    <div class="sb">${seg.map(([k, p, c]) => `<i class="s-${c}${k === best[0] ? ' on' : ''}" style="flex:${p.toFixed(4)}"><b>${Math.round(p * 100)}%</b></i>`).join('')}</div>
+    <div class="sbl"><span>${esc(m.home.name)}</span><span>Empate</span><span>${esc(m.away.name)}</span></div>
+    <div class="vk"><div><b>${pr.xg.h.toFixed(2).replace('.', ',')} – ${pr.xg.a.toFixed(2).replace('.', ',')}</b><small>goles esperados</small></div>
+      <div><b>${pct0(pr.over['2.5'])}</b><small>más de 2,5</small></div><div><b>${pct0(pr.btts.si)}</b><small>ambos marcan</small></div>
+      <div><b>${pr.top[0].h}-${pr.top[0].a}</b><small>marcador más probable</small></div></div></div>`;
+}
+
+// ---- Calculadora de valor: cuota justa, cuota mínima con valor y valor esperado con TU cuota (se guarda en el móvil) ----
+const MIN_EDGE = 1.05; // se pide al menos un 5% sobre la cuota justa para llamarlo "valor": margen de error del modelo
+const calcRows = (pr, m) => [
+  [`1 · ${m.home.name}`, pr.p1, 'b365:0'], ['X · Empate', pr.pX, 'b365:1'], [`2 · ${m.away.name}`, pr.p2, 'b365:2'],
+  ['1X', pr.dc['1X']], ['X2', pr.dc['X2']], ['12', pr.dc['12']],
+  ['Más de 1,5 goles', pr.over['1.5']], ['Más de 2,5 goles', pr.over['2.5'], 'ou25:0'], ['Menos de 2,5 goles', pr.under['2.5'], 'ou25:1'], ['Más de 3,5 goles', pr.over['3.5']],
+  ['Ambos marcan: Sí', pr.btts.si], ['Ambos marcan: No', pr.btts.no],
+];
+const LS = 'futbol-cuotas-v1';
+const store = { get() { try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch { return {}; } }, set(o) { try { localStorage.setItem(LS, JSON.stringify(o)); } catch { /* sin almacenamiento */ } } };
+const evBadge = (p, od) => { const ev = expectedValue(p, od); return `<b class="ev ${evCls(ev)}">${evTxt(ev)}</b>`; };
+
+function calcHtml(pr, m, bt) {
+  const saved = store.get()[m.id] || {}, o = m.odds || {};
+  const rows = calcRows(pr, m).map(([label, p, src], i) => {
+    const [k, j] = (src || '').split(':'), auto = k && o[k] ? o[k][+j] : null, val = saved[i] ?? auto ?? '';
+    return `<tr data-p="${p}"><td class="l">${esc(label)}</td><td><b>${pct0(p)}</b><small>@ ${odd(p)}</small></td><td class="mn">${dec(fairOdds(p) * MIN_EDGE)}</td>
+      <td><input class="oi" inputmode="decimal" placeholder="cuota" data-m="${esc(m.id)}" data-i="${i}" value="${val === '' ? '' : String(val).replace('.', ',')}" aria-label="Cuota para ${esc(label)}"></td><td class="ev-c">${val === '' ? '–' : evBadge(p, +val)}</td></tr>`;
+  }).join('');
+  const warn = bt && !bt.beatsBase ? 'En esta muestra el modelo NO mejora a la base ingenua en 1X2: no uses estos valores.' : 'Modelo simple, sin lesiones ni alineaciones: un valor positivo es una pista para investigar, no una apuesta rentable asegurada.';
+  return `<div class="card tw"><table class="tbl calc"><thead><tr><th class="l">Mercado</th><th>Prob.<small>cuota justa</small></th><th>Mín.<small>con valor</small></th><th>Tu cuota</th><th>Valor</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="mu" style="margin-top:6px"><b>Cuota mín. valor</b> = cuota justa + 5%: por debajo de eso no compensa el error del modelo. Escribe la cuota que ves en tu casa de apuestas (se guarda en este móvil) y verás el valor esperado teórico (prob. × cuota − 1). Las cuotas Bet365 de la fuente aparecen ya rellenas cuando existen. ${warn}</p>`;
+}
+
+// Una sola escucha: recalcula el valor al escribir una cuota y la guarda.
+if (typeof document !== 'undefined') document.addEventListener('input', e => {
+  const el = e.target; if (!el.classList || !el.classList.contains('oi')) return;
+  const tr = el.closest('tr'), p = +tr.dataset.p, v = parseFloat(el.value.replace(',', '.')), cellEv = tr.querySelector('.ev-c');
+  cellEv.innerHTML = v > 1 ? evBadge(p, v) : '–';
+  const all = store.get(), cur = all[el.dataset.m] || {};
+  if (v > 1) cur[el.dataset.i] = v; else delete cur[el.dataset.i];
+  all[el.dataset.m] = cur; store.set(all);
+});
+
+const fold = (title, body, open = false) => `<details class="fold"${open ? ' open' : ''}><summary>${title}</summary>${body}</details>`;
 
 const demoNote = () => data.meta.isDemo ? '<div class="demo"><b>Sobre datos de demostración.</b> Las probabilidades se calculan con partidos ficticios: solo sirven para revisar la pantalla.</div>' : '';
 
@@ -99,7 +147,7 @@ export const analisisPartido = async ({ id, q }) => {
     <div class="vs"><div class="side-t">${crest(m.home, 1)}<span>${esc(m.home.name)}</span></div>
       <div class="when"><b>${m.status === 'FT' ? `${m.score.h} - ${m.score.a}` : 'vs'}</b><small>${m.status === 'FT' ? 'Finalizado' : 'Por jugar'}</small></div>
       <div class="side-t">${crest(m.away, 1)}<span>${esc(m.away.name)}</span></div></div></div>${demoNote()}`;
-  const trends = insightHtml(ins) + trendsHtml(tr, m, last, ord);
+  const insightPart = insightHtml(ins), trendsTableHtml = trendsHtml(tr, m, last, ord), trends = insightPart + trendsTableHtml;
   if (!pr) return `${head}${trends}${empty('Sin estimación del modelo Poisson: alguno de los equipos todavía no tiene partidos jugados en esta competición.')}<h2>Cuotas Bet365</h2>${oddsHtml(m, null, null)}`;
 
   const low = Math.min(pr.games.h, pr.games.a) < 5;
@@ -112,23 +160,23 @@ export const analisisPartido = async ({ id, q }) => {
       Menor Brier/log-loss = mejor. Con pocos partidos el resultado es muy ruidoso.</p></div>`
     : `<div class="card empty">Aún no hay partidos suficientes para evaluar el modelo (se necesitan al menos 3 por equipo antes de cada predicción).</div>`;
 
-  return `${head}
-  ${trends}
-  <h2>Estimación del modelo (Poisson)</h2>
-  ${low ? '<div class="demo">Muestra pequeña: algún equipo tiene menos de 5 partidos previos. La estimación se apoya sobre todo en la media de la liga.</div>' : ''}
-  <div class="grid">
+  const grid = `<div class="grid">
     <div class="card"><b>1X2</b>${bar('1 · ' + esc(m.home.name), pr.p1)}${bar('X · Empate', pr.pX)}${bar('2 · ' + esc(m.away.name), pr.p2)}</div>
     <div class="card"><b>Doble oportunidad</b>${bar('1X', pr.dc['1X'])}${bar('12', pr.dc['12'])}${bar('X2', pr.dc['X2'])}</div>
-    <div class="card"><b>Goles totales</b>${[1.5, 2.5, 3.5].map(L => bar(`Más de ${String(L).replace('.', ',')}`, pr.over[L])).join('')}
-      ${bar('Menos de 2,5', pr.under[2.5])}</div>
-    <div class="card"><b>Ambos marcan</b>${bar('Sí', pr.btts.si)}${bar('No', pr.btts.no)}</div>
-  </div>
-  <div class="card" style="margin-top:12px"><div class="st"><span>Goles esperados (xG del modelo)</span><span>${pr.xg.h.toFixed(2).replace('.', ',')} – ${pr.xg.a.toFixed(2).replace('.', ',')}</span></div>
-    <div class="st"><span>Marcadores más probables</span><span>${pr.top.slice(0, 3).map(s => `${s.h}-${s.a} (${pc(s.p)})`).join(' · ')}</span></div>
-    <div class="st"><span>Partidos previos usados</span><span>${pr.trainMatches} liga · ${pr.games.h} local · ${pr.games.a} visitante</span></div></div>
-  <p class="mu" style="margin-top:6px">«@» es la cuota justa (1/probabilidad), sin margen de casa. Son estimaciones, no certezas ni garantía de beneficio.</p>
-  <h2>Validación del modelo</h2>${btHtml}
-  <h2>Cuotas Bet365 y valor esperado</h2>${oddsHtml(m, pr, bt)}
-  <h2>Método</h2><div class="card empty"><p>Poisson independiente para goles de cada equipo. Ataque y defensa de cada equipo = goles a favor/en contra respecto a la media de la liga, encogidos hacia esa media con 4 partidos virtuales. Solo usa partidos anteriores a este.</p>
-    <p>No incluye ventaja de forma reciente, lesiones, descansos ni la correlación 0-0/1-1 de Dixon-Coles.</p></div>`;
+    <div class="card"><b>Goles totales</b>${[1.5, 2.5, 3.5].map(L => bar(`Más de ${String(L).replace('.', ',')}`, pr.over[L])).join('')}${bar('Menos de 2,5', pr.under[2.5])}</div>
+    <div class="card"><b>Ambos marcan</b>${bar('Sí', pr.btts.si)}${bar('No', pr.btts.no)}</div></div>
+    <div class="card" style="margin-top:12px"><div class="st"><span>Marcadores más probables</span><span>${pr.top.slice(0, 3).map(s => `${s.h}-${s.a} (${pc(s.p)})`).join(' · ')}</span></div>
+    <div class="st"><span>Partidos previos usados</span><span>${pr.trainMatches} liga · ${pr.games.h} local · ${pr.games.a} visitante</span></div></div>`;
+  const method = `<div class="card empty"><p>Poisson independiente para goles de cada equipo. Ataque y defensa = goles a favor/en contra respecto a la media de la liga, encogidos hacia esa media con 4 partidos virtuales. Usa solo partidos anteriores a este; los de la temporada anterior pesan la mitad.</p>
+    <p>No incluye lesiones, descansos ni la correlación 0-0/1-1 de Dixon-Coles.</p></div>`;
+  return `${head}
+  ${verdictHtml(pr, m)}
+  ${low ? '<div class="demo">Muestra pequeña: algún equipo tiene menos de 5 partidos previos. La estimación se apoya sobre todo en la media de la liga.</div>' : ''}
+  ${insightPart}
+  <h2>Cuotas y valor</h2>${calcHtml(pr, m, bt)}
+  ${m.odds && (m.odds.b365 || m.odds.ou25) ? fold('Cuotas Bet365 de la fuente', oddsHtml(m, pr, bt)) : ''}
+  ${fold('Tendencias por mercado (tablas)', trendsTableHtml)}
+  ${fold('Estimación completa del modelo (Poisson)', grid)}
+  ${fold('Validación del modelo', btHtml)}
+  ${fold('Método', method)}`;
 };

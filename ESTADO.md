@@ -56,3 +56,9 @@ Inglaterra (Premier, Championship, League One, League Two), Escocia (Premiership
 - Claude accede al repo con la herramienta del entorno (add_repo) y clona en /home/claude/appfutbol; publica con commit y push a main. Verificar siempre que el HEAD remoto coincide.
 - El entorno de Claude no puede abrir football-data.co.uk ni la web desplegada con curl; se lee con WebFetch. La Action de GitHub sí descarga.
 - Probar en local: python3 -m http.server 8765 en la carpeta del repo; capturas móviles con Playwright (viewport 390x844).
+
+## Actualización (análisis más claro y útil para apostar)
+- Datos: data/prev/<liga>.json = temporada anterior (solo jugados, con cuotas); index.json trae `prev`. Las cuotas Bet365 de fixtures.csv se conservan en los próximos partidos.
+- Modelo: fit() admite peso por partido (m.w). La temporada anterior entra con peso 0,5 (backtest walk-forward real: Brier 1X2 0,6115 con w=0,5 frente a 0,6129 con w=1; sin prev no es comparable por cubrir menos partidos). También alimenta los «Últimos 10».
+- Página de análisis rediseñada: tarjeta de veredicto (barra 1X2, xG, más de 2,5, ambos marcan, marcador), lectura + favoritos (solo entre 55% y 80%), calculadora de cuotas (cuota justa, mínima con valor = justa +5%, tu cuota → valor esperado; se guarda en localStorage; rellena con Bet365 si la fuente la trae) y secciones técnicas plegables.
+- Probado: 36 tests, carga en Chromium móvil sin errores, cálculo de valor al escribir cuota. Pendiente: Historial, Combinadas, Dixon-Coles/forma (validar con backtest), calendarios SP2/D2/I2/B1/G1.

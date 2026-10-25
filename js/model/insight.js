@@ -73,9 +73,12 @@ export function candidates(tr, pr, m) {
 // Elige hasta 2 favoritos DISTINTOS: (1) el más probable con respaldo y (2) el que más supera a la media de la liga con prob. razonable.
 // Se evitan mercados casi idénticos entre sí (p. ej. más de 1,5 y más de 2,5 a la vez) y los poco fiables.
 const FAMILY = id => /^(ft_o|ft_u)/.test(id) ? 'goles' : /^(btts|nobtts)$/.test(id) ? 'btts' : /^ht_|^h2_/.test(id) ? 'parte' : /^co_/.test(id) ? 'corners' : /^ca_/.test(id) ? 'tarjetas' : /^(1|2|dc)/.test(id) ? 'resultado' : id;
+// Mercados con cuota justa < 1,25 (prob. > 80%) no se proponen: pagan casi nada y cualquier fallo del modelo se come el valor.
+const MAX_P = 0.8;
+
 export function pickFavorites(cands) {
   // Con muestra pequeña se exige más probabilidad (60%) y la confianza sale 'baja'; con menos de 3 partidos no se propone.
-  const ok = cands.filter(c => c.n >= HARD_MIN && c.agree !== false && c.p >= (c.small ? 0.6 : 0.55));
+  const ok = cands.filter(c => c.n >= HARD_MIN && c.agree !== false && c.p >= (c.small ? 0.6 : 0.55) && c.p <= MAX_P);
   const first = [...ok].sort((a, b) => b.score - a.score)[0];
   if (!first) return [];
   const second = [...ok].filter(c => c.id !== first.id && FAMILY(c.id) !== FAMILY(first.id) && c.edge != null && c.edge > 0)

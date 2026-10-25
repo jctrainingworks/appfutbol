@@ -26,10 +26,11 @@ test('restDays y h2h', () => {
 });
 test('pickFavorites: máx 2, distintos, de familias distintas, sin muestras pequeñas ni desacuerdos', () => {
   const c = (id, p, o = {}) => ({ id, label: id, p, trend: p, model: null, edge: 0.1, n: 10, agree: null, score: p, small: false, ...o });
-  const f = pickFavorites([c('ft_o15', 0.9), c('ft_o25', 0.8), c('btts', 0.7), c('ht_o05', 0.6, { n: 2, small: true }), c('nobtts', 0.95, { agree: false })]);
+  const f = pickFavorites([c('ft_o15', 0.78), c('ft_o25', 0.74), c('btts', 0.7), c('ft_o05', 0.93), c('ht_o05', 0.6, { n: 2, small: true }), c('nobtts', 0.95, { agree: false })]);
   assert.equal(f.length, 2);
   assert.equal(f[0].id, 'ft_o15');
-  assert.equal(f[1].id, 'btts');           // ft_o25 es de la misma familia (goles); ht_o05 tiene solo 2 partidos; nobtts no coincide con el modelo
+  assert.equal(f[1].id, 'btts');           // ft_o05 (93%) paga casi nada y se descarta; ft_o25 es de la misma familia (goles); ht_o05 tiene solo 2 partidos; nobtts no coincide con el modelo
+  assert.deepEqual(pickFavorites([c('x', 0.85)]), []); // por encima del 80%: cuota justa < 1,25
   assert.deepEqual(pickFavorites([c('x', 0.5)]), []); // por debajo del 55%
   const s = pickFavorites([c('x', 0.58, { n: 4, small: true }), c('y', 0.65, { n: 4, small: true })]);
   assert.deepEqual(s.map(z => [z.id, z.conf]), [['y', 'baja']]); // muestra pequeña: exige 60% y sale confianza baja
