@@ -16,17 +16,20 @@ const finished = ms => ms.filter(m => m.status === 'FT' && m.score);
 export function fit(matches, opts = {}) {
   const { K } = { ...DEFAULTS, ...opts }, done = finished(matches);
   if (!done.length) return null;
-  const avgH = mean(done.map(m => m.score.h)), avgA = mean(done.map(m => m.score.a)), avg = (avgH + avgA) / 2;
+  // Cada partido puede llevar un peso m.w (por defecto 1): p. ej. la temporada anterior cuenta menos que la actual.
+  const wt = m => m.w == null ? 1 : m.w, W = done.reduce((s, m) => s + wt(m), 0);
+  if (W <= 0) return null;
+  const avgH = done.reduce((s, m) => s + wt(m) * m.score.h, 0) / W, avgA = done.reduce((s, m) => s + wt(m) * m.score.a, 0) / W, avg = (avgH + avgA) / 2;
   if (avg <= 0) return null;
   const t = new Map();
-  const get = id => t.get(id) || t.set(id, { n: 0, gf: 0, ga: 0 }).get(id);
+  const get = id => t.get(id) || t.set(id, { n: 0, w: 0, gf: 0, ga: 0 }).get(id);
   for (const m of done) {
-    const h = get(m.home.id), a = get(m.away.id);
-    h.n++; h.gf += m.score.h; h.ga += m.score.a;
-    a.n++; a.gf += m.score.a; a.ga += m.score.h;
+    const w = wt(m), h = get(m.home.id), a = get(m.away.id);
+    h.n++; h.w += w; h.gf += w * m.score.h; h.ga += w * m.score.a;
+    a.n++; a.w += w; a.gf += w * m.score.a; a.ga += w * m.score.h;
   }
   const teams = {};
-  for (const [id, x] of t) teams[id] = { n: x.n, att: (x.gf + K * avg) / (x.n + K) / avg, def: (x.ga + K * avg) / (x.n + K) / avg };
+  for (const [id, x] of t) teams[id] = { n: x.n, att: (x.gf + K * avg) / (x.w + K) / avg, def: (x.ga + K * avg) / (x.w + K) / avg };
   return { avgH, avgA, n: done.length, teams };
 }
 

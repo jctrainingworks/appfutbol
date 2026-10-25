@@ -15,6 +15,13 @@ const league = code => {
   return files.get(code);
 };
 
+// Temporada anterior (solo partidos jugados), descargada una vez por la tarea de GitHub. Si no existe, [].
+const prevFiles = new Map();
+const prev = code => {
+  if (!prevFiles.has(code)) prevFiles.set(code, fetch(url(`prev/${code}.json`)).then(r => r.ok ? r.json() : null).then(j => (j && j.matches) || []).catch(() => []));
+  return prevFiles.get(code);
+};
+
 export async function loadIndex() {
   try {
     const r = await fetch(url('index.json'), { cache: 'no-cache' });
@@ -47,6 +54,7 @@ export function makeProvider(index) {
       const r = sorted(list, status);
       return limit ? r.slice(0, limit) : r;
     },
+    async prevMatches(leagueId) { return ids.includes(leagueId) ? prev(leagueId) : []; },
     async standings(leagueId) {
       if (!ids.includes(leagueId)) return [];
       const l = await league(leagueId);
