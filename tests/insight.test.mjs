@@ -46,7 +46,7 @@ test('valor esperado = p·cuota − 1', () => {
 
 // Con los datos reales descargados por la Action: ningún partido rompe la lectura y se cumplen los invariantes.
 const dir = new URL('../data/', import.meta.url);
-for (const f of readdirSync(dir).filter(x => x.endsWith('.json') && x !== 'index.json')) {
+for (const f of readdirSync(dir).filter(x => /^[A-Z0-9]+\.json$/.test(x))) {
   test(`datos reales ${f}: invariantes de la lectura`, () => {
     const lg = JSON.parse(readFileSync(new URL(f, dir)));
     const fin = lg.matches.filter(m => m.status === 'FT');
