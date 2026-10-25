@@ -1,8 +1,7 @@
 import { data } from '../data/index.js';
-import { fit, predict, backtest, fairOdds, expectedValue } from '../model/poisson.js';
-import { matchTrends, SMOOTH } from '../model/trends.js';
-import { insight } from '../model/insight.js';
-import { computeStandings } from '../data/standings.js';
+import { fairOdds, expectedValue } from '../model/poisson.js';
+import { SMOOTH } from '../model/trends.js';
+import { analyze } from '../model/analyze.js';
 import { esc, crest, fmtTime, dayLabel, groupByDay, chips, empty, analysisTabs } from '../ui.js';
 
 const pc = p => (p * 100).toFixed(1).replace('.', ',') + '%';
@@ -129,19 +128,13 @@ export const analisis = async ({ q }) => {
     ${groupByDay(list, Object.fromEntries(leagues.map(l => [l.id, l.name]))).replace(/href="#\/partidos\//g, 'href="#/analisis/')}`;
 };
 
-const PREV_W = 0.5;
-
 export const analisisPartido = async ({ id, q }) => {
   const m = await data.match(id);
   if (!m) return empty('Partido no encontrado.');
   const [l, all, prevAll] = await Promise.all([data.league(m.leagueId), data.matches({ leagueId: m.leagueId }), data.prevMatches ? data.prevMatches(m.leagueId) : []]);
-  const prevSeason = prevAll.filter(x => x.status === 'FT' && x.score && x.kickoff < m.kickoff);
-  // Entrenamiento: solo partidos terminados ANTES de este (también válido al revisar un partido ya jugado).
-  const train = all.filter(x => x.status === 'FT' && x.kickoff < m.kickoff);
-  const last = q?.get('n') === 'all' ? 0 : 10, ord = q?.get('o') === 'edge' ? 'edge' : 'p', tr = matchTrends(last ? [...prevSeason, ...train] : train, m.home.id, m.away.id, { last });
-  // La temporada anterior cuenta la mitad (w=0,5): en el backtest walk-forward con datos reales mejoró Brier y log-loss frente a no usarla.
-  const model = fit([...prevSeason.map(x => ({ ...x, w: PREV_W })), ...train]), pr = predict(model, m.home.id, m.away.id), bt = backtest(train);
-  const ins = insight({ train, m, tr, pr, bt, standings: computeStandings(train, l.teams || []) });
+  // Mismo cálculo que guarda el Historial (js/model/analyze.js): solo partidos terminados ANTES de este (también válido al revisar un partido ya jugado).
+  const last = q?.get('n') === 'all' ? 0 : 10, ord = q?.get('o') === 'edge' ? 'edge' : 'p';
+  const { tr, pr, bt, ins } = analyze({ m, all, prevAll, teams: l.teams || [], last });
   const head = `<a class="back" href="#/analisis">‹ Análisis</a>
   <div class="hero"><div class="mu">${esc(l.name)} · Jornada ${m.round} · ${dayLabel(m.kickoff)} ${fmtTime(m.kickoff)}</div>
     <div class="vs"><div class="side-t">${crest(m.home, 1)}<span>${esc(m.home.name)}</span></div>

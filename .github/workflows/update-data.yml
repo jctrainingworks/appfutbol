@@ -30,6 +30,9 @@ jobs:
           node-version: 22
       - name: Descargar y convertir datos
         run: node scripts/fetch-data.mjs
+      - name: Historial (guardar pronósticos de próximos partidos y liquidar los jugados)
+        continue-on-error: true
+        run: node scripts/update-history.mjs
       - name: Guardar cambios
         run: |
           git config user.name "github-actions[bot]"

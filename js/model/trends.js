@@ -96,6 +96,16 @@ export function matchTrends(matches, homeId, awayId, { last = 10 } = {}) {
 export const ALL_MARKETS = [...GAME_MARKETS.map(m => ({ grp: 'Goles del partido', ...m, kind: 'game' })), ...TEAM_MARKETS.map(m => ({ grp: 'Por equipo', ...m, kind: 'team' }))];
 export const marketById = id => ALL_MARKETS.find(m => m.id === id);
 
+// ¿Se cumplió este mercado del partido en un partido ya jugado? true/false, o null si la fuente no trae el dato que necesita
+// (marcador al descanso, corners o tarjetas). Solo mercados del partido (no los de equipo). Lo usa el Historial para liquidar pronósticos.
+export function marketOutcome(id, m) {
+  const mk = GAME_MARKETS.find(x => x.id === id);
+  if (!mk || !m || m.status !== 'FT' || !m.score) return null;
+  const g = persp(m, true);
+  if (mk.need && !HAS[mk.need](g)) return null;
+  return !!mk.f(g);
+}
+
 // leagues = [{ id, name, country, matches }]. venue: 'all' | 'home' | 'away'. Ordena por frecuencia suavizada hacia la media de su liga.
 export function rankTeams(leagues, mk, { venue = 'all', minGames = 5 } = {}) {
   const rows = [];

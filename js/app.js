@@ -5,11 +5,12 @@ import { ligas, liga } from './views/leagues.js';
 import { partidos, partido } from './views/matches.js';
 import { analisis, analisisPartido } from './views/analysis.js';
 import { mercados } from './views/markets.js';
+import { historial } from './views/history.js';
 import { soon } from './views/soon.js';
 
 const NAV = [['', 'Inicio', 'home'], ['ligas', 'Ligas', 'trophy'], ['partidos', 'Partidos', 'cal'], ['analisis', 'Análisis', 'chart'], ['combinadas', 'Combinadas', 'layers'], ['historial', 'Historial', 'clock']];
 const ROUTES = [['', home], ['ligas', ligas], ['ligas/:id', liga], ['partidos', partidos], ['partidos/:id', partido],
-  ['analisis', p => p.q.get('t') === 'mercados' ? mercados(p) : analisis(p)], ['analisis/:id', analisisPartido], ['combinadas', soon('combinadas')], ['historial', soon('historial')]];
+  ['analisis', p => p.q.get('t') === 'mercados' ? mercados(p) : analisis(p)], ['analisis/:id', analisisPartido], ['combinadas', soon('combinadas')], ['historial', historial]];
 
 const $ = s => document.querySelector(s);
 const CREDITS = '<p class="credits">Escudos: <a href="https://www.footylogos.com" target="_blank" rel="noopener">FootyLogos.com</a> y football-logos.cc, propiedad de sus clubes · Datos: football-data.co.uk y fixturedownload.com · Uso personal</p>';
