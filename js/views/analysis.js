@@ -4,6 +4,7 @@ import { SMOOTH } from '../model/trends.js';
 import { analyze } from '../model/analyze.js';
 import { upsertBet } from '../model/bets.js';
 import { loadBets, saveBets } from '../betstore.js';
+import { marketHtml, liveMarket, profileHtml, formHtml, tablesHtml, h2hHtml, extrasHtml, paramsHtml } from './analysis-extra.js';
 import { esc, crest, fmtTime, dayLabel, groupByDay, chips, empty, analysisTabs } from '../ui.js';
 
 const pc = p => (p * 100).toFixed(1).replace('.', ',') + '%';
@@ -96,6 +97,11 @@ if (typeof document !== 'undefined') document.addEventListener('input', e => {
   const all = store.get(), cur = all[el.dataset.m] || {};
   if (v > 1) cur[el.dataset.i] = v; else delete cur[el.dataset.i];
   all[el.dataset.m] = cur; store.set(all);
+  const box = document.getElementById('mk-live');
+  if (box && box.dataset.live === '1') {
+    const t = el.closest('table'), od = [0, 1, 2].map(i => parseFloat((t.querySelector(`.oi[data-i="${i}"]`)?.value || '').replace(',', '.')));
+    const d = t.dataset; liveMarket(box, od.every(x => x > 1) ? od : null, { home: { name: d.hn }, away: { name: d.an } });
+  }
 });
 
 // Registrar una apuesta real: guarda partido, mercado, tu cuota y la probabilidad que daba el modelo (en este móvil).
@@ -153,7 +159,7 @@ export const analisisPartido = async ({ id, q }) => {
   const [l, all, prevAll] = await Promise.all([data.league(m.leagueId), data.matches({ leagueId: m.leagueId }), data.prevMatches ? data.prevMatches(m.leagueId) : []]);
   // Mismo cálculo que guarda el Historial (js/model/analyze.js): solo partidos terminados ANTES de este (también válido al revisar un partido ya jugado).
   const last = q?.get('n') === 'all' ? 0 : 10, ord = q?.get('o') === 'edge' ? 'edge' : 'p';
-  const { tr, pr, bt, ins } = analyze({ m, all, prevAll, teams: l.teams || [], last });
+  const { tr, pr, bt, ins, model, train, prevSeason } = analyze({ m, all, prevAll, teams: l.teams || [], last });
   const head = `<a class="back" href="#/analisis">‹ Análisis</a>
   <div class="hero"><div class="mu">${esc(l.name)} · Jornada ${m.round} · ${dayLabel(m.kickoff)} ${fmtTime(m.kickoff)}</div>
     <div class="vs"><div class="side-t">${crest(m.home, 1)}<span>${esc(m.home.name)}</span></div>
@@ -180,15 +186,22 @@ export const analisisPartido = async ({ id, q }) => {
     <div class="card" style="margin-top:12px"><div class="st"><span>Marcadores más probables</span><span>${pr.top.slice(0, 3).map(s => `${s.h}-${s.a} (${pc(s.p)})`).join(' · ')}</span></div>
     <div class="st"><span>Partidos previos usados</span><span>${pr.trainMatches} liga · ${pr.games.h} local · ${pr.games.a} visitante</span></div></div>`;
   const method = `<div class="card empty"><p>Poisson independiente para goles de cada equipo. Ataque y defensa = goles a favor/en contra respecto a la media de la liga, encogidos hacia esa media con 4 partidos virtuales. Usa solo partidos anteriores a este; los de la temporada anterior pesan la mitad.</p>
-    <p>No incluye lesiones, descansos ni la correlación 0-0/1-1 de Dixon-Coles.</p></div>`;
+    <p>No incluye lesiones, descansos ni la correlación 0-0/1-1 de Dixon-Coles. El perfil, la forma, las tablas y los enfrentamientos directos son descriptivos: no alteran las probabilidades.</p></div>`;
   return `${head}
   ${verdictHtml(pr, m)}
+  ${marketHtml(pr, m)}
   ${low ? '<div class="demo">Muestra pequeña: algún equipo tiene menos de 5 partidos previos. La estimación se apoya sobre todo en la media de la liga.</div>' : ''}
   ${insightPart}
   <h2>Cuotas y valor</h2>${calcHtml(pr, m, bt)}
   ${m.odds && (m.odds.b365 || m.odds.ou25) ? fold('Cuotas Bet365 de la fuente', oddsHtml(m, pr, bt)) : ''}
+  ${fold('Perfil de los equipos (remates, córners, tarjetas, partes)', profileHtml(m, train), true)}
+  ${fold('Forma y calidad de los rivales', formHtml(m, train, model))}
+  ${fold('Clasificación en casa y fuera · carga de partidos', tablesHtml(m, train, l.teams || []))}
+  ${fold('Enfrentamientos directos', h2hHtml(m, train, prevSeason))}
+  ${fold('Más mercados del modelo (líneas, hándicap, marcadores)', extrasHtml(pr, m))}
   ${fold('Tendencias por mercado (tablas)', trendsTableHtml)}
   ${fold('Estimación completa del modelo (Poisson)', grid)}
   ${fold('Validación del modelo', btHtml)}
+  ${fold('Parámetros del modelo', paramsHtml(pr, m, model))}
   ${fold('Método', method)}`;
 };
