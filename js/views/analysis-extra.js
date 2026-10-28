@@ -16,16 +16,18 @@ const NAMES = ['1', 'X', '2'];
 
 // ---------- Contraste modelo–mercado ----------
 export function marketBody(c, m) {
-  const lab = ['1 · ' + m.home.name, 'X · Empate', '2 · ' + m.away.name], x = c.x12;
-  const msg = c.level === 'alto'
-    ? `<p class="warn"><b>Aviso: el modelo y el mercado discrepan ${Math.round(x.maxAbs * 100)} puntos en «${esc(lab[x.idx])}».</b> En el Historial y en una prueba con 1.114 partidos reales, el mercado acertó más que el modelo y, cuando discrepaban 12 puntos o más, el mercado llevó la razón con claridad. Trata la probabilidad del modelo con mucha cautela y no busques «valor» en esta diferencia: lo más probable es que al modelo le falte información (lesiones, alineaciones, forma real).</p>`
-    : c.level === 'medio' ? `<p class="mu">Hay una diferencia apreciable (${Math.round(x.maxAbs * 100)} puntos en «${esc(lab[x.idx])}»): por debajo del umbral de aviso (${DISAGREE * 100} puntos), pero conviene mirar qué sabe el mercado que el modelo no.</p>`
-      : `<p class="mu">Modelo y mercado coinciden razonablemente (diferencia máxima ${Math.round(x.maxAbs * 100)} puntos). Eso no valida a ninguno de los dos, solo indica que no hay una discrepancia grande que investigar.</p>`;
-  const top = x.modelTop !== x.marketTop ? `<p class="mu">El modelo elige como más probable «${esc(lab[x.modelTop])}» y el mercado «${esc(lab[x.marketTop])}».</p>` : '';
-  return `<div class="card tw"><table class="tbl"><thead><tr><th class="l">1X2</th><th>Modelo</th><th>Mercado<small>sin margen</small></th><th>Diferencia<small>puntos</small></th></tr></thead><tbody>
-    ${lab.map((l, k) => `<tr${k === x.idx && c.level !== 'ok' ? ' class="dis"' : ''}><td class="l">${esc(l)}</td><td><b>${p0(x.model[k])}</b></td><td>${p0(x.market[k])}</td><td><b class="${Math.abs(x.diff[k]) >= DISAGREE ? 'dn' : ''}">${pts(x.diff[k])}</b></td></tr>`).join('')}
+  const lab = ['1 · ' + m.home.name, 'X · Empate', '2 · ' + m.away.name], who = [m.home.name, 'el empate', m.away.name], x = c.x12;
+  const k = x.idx, d = x.diff[k], more = d > 0;
+  const head = c.level === 'alto' ? ['bad', '⚠️ El modelo y el mercado NO coinciden'] : c.level === 'medio' ? ['mid', '🟡 Pequeña diferencia'] : ['good', '✅ El modelo y el mercado coinciden'];
+  const line = c.level === 'ok'
+    ? 'Los dos ven el partido casi igual. Es buena señal, aunque no garantiza nada.'
+    : `Con <b>${esc(who[k])}</b>, el modelo da <b>${p0(x.model[k])}</b> y el mercado <b>${p0(x.market[k])}</b>. El modelo está ${more ? 'más optimista' : 'más pesimista'} que el mercado.`
+      + (c.level === 'alto' ? ` <b>Fíate más del mercado (${p0(x.market[k])}).</b> Cuando se separan tanto, el mercado suele acertar más: sabe de lesiones y alineaciones y el modelo no.` : '');
+  const table = `<div class="card tw"><table class="tbl"><thead><tr><th class="l">1X2</th><th>Modelo</th><th>Mercado<small>sin margen</small></th><th>Diferencia<small>puntos</small></th></tr></thead><tbody>
+    ${lab.map((l, i) => `<tr${i === k && c.level !== 'ok' ? ' class="dis"' : ''}><td class="l">${esc(l)}</td><td><b>${p0(x.model[i])}</b></td><td>${p0(x.market[i])}</td><td><b class="${Math.abs(x.diff[i]) >= DISAGREE ? 'dn' : ''}">${pts(x.diff[i])}</b></td></tr>`).join('')}
     ${c.ou ? `<tr><td class="l">Más de 2,5 goles</td><td><b>${p0(c.ou.model[0])}</b></td><td>${p0(c.ou.market[0])}</td><td><b class="${Math.abs(c.ou.diff[0]) >= DISAGREE ? 'dn' : ''}">${pts(c.ou.diff[0])}</b></td></tr>` : ''}</tbody></table></div>
-    ${msg}${top}<p class="mu">Mercado = probabilidad implícita de las cuotas ${x.src || ''}con el margen de la casa repartido proporcionalmente (margen: ${p1(x.margin)}).</p>`;
+    <p class="mu">Modelo = lo que calcula la app con los goles de los equipos. Mercado = lo que dicen las cuotas (sin el margen de la casa, ${p1(x.margin)}). Diferencia = modelo menos mercado. Aviso desde ${DISAGREE * 100} puntos de diferencia.</p>`;
+  return `<div class="mk-${head[0]}"><b class="mk-t">${head[1]}</b><p>${line}</p></div><details class="mk-more"><summary>Ver tabla completa</summary>${table}</details>`;
 }
 export function marketHtml(pr, m) {
   const c = compareMarket(pr, m.odds);
@@ -36,7 +38,7 @@ export function marketHtml(pr, m) {
 // Versión en vivo con las cuotas que escribe la persona (solo si la fuente no trae 1X2).
 export function liveMarket(box, odds, m) {
   const pr = JSON.parse(box.dataset.pr), c = compareMarket({ ...pr, over: { '2.5': 0 }, under: { '2.5': 0 } }, { b365: odds });
-  box.innerHTML = c.x12 ? marketBody(c, m).replace('Mercado = probabilidad implícita de las cuotas', 'Mercado = probabilidad implícita de las cuotas que has escrito, ') : '<p class="mu">Escribe las tres cuotas 1X2 (más de 1,00) para ver el contraste con el mercado.</p>';
+  box.innerHTML = c.x12 ? marketBody(c, m) : '<p class="mu">Escribe las tres cuotas 1X2 (más de 1,00) para ver el contraste con el mercado.</p>';
 }
 
 // ---------- Perfil de los equipos ----------

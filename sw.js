@@ -1,4 +1,4 @@
-const V = 'futbol-v15';
+const V = 'futbol-v16';
 const SHELL = ['./', 'index.html', 'css/styles.css', 'js/app.js', 'js/config.js', 'js/ui.js', 'js/crests.js', 'js/data/index.js', 'js/data/demo.js', 'js/data/footballdata.js', 'js/data/footballcsv.js', 'js/data/standings.js', 'js/views/home.js', 'js/views/leagues.js', 'js/views/matches.js', 'js/views/analysis.js', 'js/views/analysis-extra.js', 'js/model/extras.js', 'js/model/market.js', 'js/model/profile.js', 'js/views/markets.js', 'js/model/poisson.js', 'js/model/trends.js', 'js/model/insight.js', 'js/model/analyze.js', 'js/model/history.js', 'js/views/history.js', 'js/views/mybets.js', 'js/model/bets.js', 'js/betstore.js', 'js/views/soon.js', 'manifest.webmanifest'];
 self.addEventListener('install', e => e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== V).map(x => caches.delete(x)))).then(() => clients.claim())));
