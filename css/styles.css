@@ -165,3 +165,11 @@ h2{font-size:15px;font-weight:650;color:var(--mu);margin:22px 0 8px}
 .pkb{text-align:right;font-size:13px;color:var(--w);font-weight:650}.pkb small{color:var(--mu);font-weight:400}
 .clv{display:block;font-size:12.5px}
 .hoyr .hs{display:flex;flex-direction:column;align-items:flex-end;white-space:nowrap}
+/* Mis filtros */
+.ff{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 12px}.ffh{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.fdesc{margin:4px 0 8px;font-size:12.5px}.ff .card.list{margin-top:6px}
+.flc{display:flex;gap:8px;align-items:flex-start;font-size:14px}.flc input{margin-top:3px;width:18px;height:18px;flex:none}
+.flb{display:block;font-size:13px;margin:10px 0;color:var(--mu)}.flb input,.fr select,.fr input{background:var(--s2);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:14px;max-width:100%}
+.flb input{display:block;width:100%;margin-top:4px}.flb input.fnum{width:70px}
+.fr{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;align-items:center}.fr select{flex:1 1 120px;min-width:0}.fr2{display:flex;gap:6px;align-items:center;flex:1 1 100%}.fr2 select{flex:1}.fr2 input{width:64px;text-align:center}
+.fed{margin:10px 0 0;background:transparent;border-color:var(--line)}.fed .btn{margin:6px 6px 6px 0}.fed .btn.bd{color:#f87171}.fbtns{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}

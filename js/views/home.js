@@ -1,6 +1,7 @@
 import { data } from '../data/index.js';
 import { analyze } from '../model/analyze.js';
 import { rate, sortRated } from '../model/today.js';
+import { filtersHtml, setItems } from './filters.js';
 import { esc, crest, fmtTime, dayLabel, groupByDay, table, countryRows } from '../ui.js';
 
 const pct = p => Math.round(p * 100) + '%';
@@ -18,8 +19,9 @@ async function hoyHtml(leagues, names) {
   const items = [];
   for (const [lg, list] of by) {
     const [l, all, prevAll] = await Promise.all([data.league(lg), data.matches({ leagueId: lg }), data.prevMatches ? data.prevMatches(lg) : []]);
-    for (const m of list) { const a = analyze({ m, all, prevAll, teams: l.teams || [], withBacktest: false, withStandings: false }); items.push({ m, r: rate(a.pr, m) }); }
+    for (const m of list) { const a = analyze({ m, all, prevAll, teams: l.teams || [], withBacktest: false, withStandings: false }); items.push({ m, r: rate(a.pr, m), pr: a.pr, tr: a.tr }); }
   }
+  setItems(items, names);
   const sorted = sortRated(items), g = sorted.filter(x => x.r.light === 'green'), y = sorted.filter(x => x.r.light === 'yellow'), r = sorted.filter(x => x.r.light === 'red');
   const block = (title, list, hint, open) => list.length ? `<details class="fold"${open ? ' open' : ''}><summary>${title} (${list.length})</summary><p class="mu">${hint}</p><div class="card list">${list.map(x => hoyRow(x, names)).join('')}</div></details>` : '';
   const picks = g.length ? `<div class="card hoy-top"><b>Selecciones que modelo y mercado confirman</b>${g.slice(0, 8).map(x => `<div class="pkrow"><span><b>${esc(x.m.home.name)} – ${esc(x.m.away.name)}</b><small class="mu">${dayLabel(x.m.kickoff)} ${fmtTime(x.m.kickoff)}</small></span><span class="pkb">${esc(x.r.pick.label)}<small>${pct(x.r.pick.mk)}</small></span></div>`).join('')}</div>` : '<div class="card empty"><p>Ahora mismo ningún partido tiene una selección que modelo y mercado confirmen a la vez. Mejor no forzar.</p></div>';
@@ -48,6 +50,7 @@ export default async () => {
   ];
   if (!data.meta.isDemo) setTimeout(() => hoyHtml(leagues, names).then(h => { const el = document.getElementById('hoy'); if (el) el.innerHTML = h; }).catch(e => { const el = document.getElementById('hoy'); if (el) el.innerHTML = `<div class="card empty"><p>No se pudo calcular el semáforo (${esc(e.message)}).</p></div>`; }), 0);
   return `${data.meta.isDemo ? `<div class="demo"><b>Datos de demostración.</b> Equipos, partidos y resultados son ficticios y sirven solo para revisar el diseño.</div>` : ''}
+  ${data.meta.isDemo ? '' : `<h2>Mis filtros</h2><div id="filtros">${filtersHtml()}</div>`}
   <h2>Hoy: qué mirar y qué evitar</h2><div id="hoy"><div class="card empty"><p>Calculando el semáforo de los próximos partidos…</p></div></div>
   ${hero}
   <h2>Próximos partidos</h2>${groupByDay(next, names)}
