@@ -9,7 +9,8 @@ import { compareMarket } from './market.js';
 
 export const SOURCES = { modelo: 'Modelo', tend: 'Tendencia', mercado: 'Mercado' };
 const WDL = [['1', 'Gana el local (1)'], ['X', 'Empate (X)'], ['2', 'Gana el visitante (2)'], ['1X', 'Local o empate (1X)'], ['X2', 'Empate o visitante (X2)'], ['12', 'Local o visitante (12)']];
-const GOALS_MODEL = [['ft_o15', 'Más de 1,5 goles'], ['ft_o25', 'Más de 2,5 goles'], ['ft_o35', 'Más de 3,5 goles'], ['ft_u25', 'Menos de 2,5 goles'], ['btts', 'Ambos marcan: Sí'], ['nobtts', 'Ambos marcan: No']];
+const GOALS_MODEL = [['ft_o15', 'Más de 1,5 goles'], ['ft_o25', 'Más de 2,5 goles'], ['ft_o35', 'Más de 3,5 goles'], ['ft_u25', 'Menos de 2,5 goles'], ['btts', 'Ambos marcan: Sí'], ['nobtts', 'Ambos marcan: No'],
+  ['ht_o05', '1ª parte: más de 0,5 goles'], ['ht_o15', '1ª parte: más de 1,5 goles'], ['h2_o05', '2ª parte: más de 0,5 goles'], ['h2_o15', '2ª parte: más de 1,5 goles']];
 const GOALS_MARKET = [['ft_o25', 'Más de 2,5 goles'], ['ft_u25', 'Menos de 2,5 goles']];
 const OPTIONS = {
   modelo: [...WDL, ...GOALS_MODEL],
@@ -21,6 +22,7 @@ export const marketLabel = (src, id) => (OPTIONS[src] || []).find(x => x[0] === 
 
 const MODEL = {
   '1': pr => pr.p1, X: pr => pr.pX, '2': pr => pr.p2, '1X': pr => pr.dc['1X'], X2: pr => pr.dc.X2, '12': pr => pr.dc['12'],
+  ht_o05: pr => pr.halves ? pr.halves.ht.o05 : null, ht_o15: pr => pr.halves ? pr.halves.ht.o15 : null, h2_o05: pr => pr.halves ? pr.halves.h2.o05 : null, h2_o15: pr => pr.halves ? pr.halves.h2.o15 : null,
   ft_o15: pr => pr.over['1.5'], ft_o25: pr => pr.over['2.5'], ft_o35: pr => pr.over['3.5'], ft_u25: pr => pr.under['2.5'], btts: pr => pr.btts.si, nobtts: pr => pr.btts.no,
 };
 function marketP(id, odds) {

@@ -106,7 +106,10 @@ export function extrasHtml(pr, m) {
   const mx = Math.max(...e.matrix.flat()), G = e.matrix.length;
   const head = Array.from({ length: G }, (_, j) => `<th>${j}${j === G - 1 ? '+' : ''}</th>`).join('');
   const mrows = e.matrix.map((r, i) => `<tr><th>${i}${i === G - 1 ? '+' : ''}</th>${r.map(v => `<td style="background:rgba(59,130,246,${(0.08 + 0.8 * v / mx).toFixed(2)})">${(v * 100).toFixed(v >= 0.1 ? 0 : 1).replace('.', ',')}</td>`).join('')}</tr>`).join('');
-  return `<div class="card tw"><table class="tbl"><thead><tr><th class="l">Goles totales</th><th>Más</th><th>Menos</th></tr></thead><tbody>${[0.5, 1.5, 2.5, 3.5, 4.5, 5.5].map(line).join('')}</tbody></table></div>
+  const hv = pr.halves ? `<div class="card tw"><table class="tbl"><thead><tr><th class="l">Goles por partes</th><th>Prob.</th></tr></thead><tbody>
+      ${[['1ª parte: más de 0,5', pr.halves.ht.o05], ['1ª parte: más de 1,5', pr.halves.ht.o15], ['2ª parte: más de 0,5', pr.halves.h2.o05], ['2ª parte: más de 1,5', pr.halves.h2.o15]].map(([l, v]) => `<tr><td class="l">${l}</td><td><b>${p0(v)}</b><small>@ ${fo(v)}</small></td></tr>`).join('')}</tbody></table></div>
+    <p class="mu" style="margin:6px 0 12px">Aproximación: los goles totales esperados del modelo se reparten con la proporción histórica de la liga (${p0(pr.halves.share)} en la 1ª parte). En la comprobación con 1.581 partidos reales se quedó unos 2 puntos corta en la 1ª parte y unos 4 en la 2ª: trátalo como orientativo. En Tendencias ves lo que pasó de verdad en los últimos partidos de ambos equipos.</p>` : '';
+  return `${hv}<div class="card tw"><table class="tbl"><thead><tr><th class="l">Goles totales</th><th>Más</th><th>Menos</th></tr></thead><tbody>${[0.5, 1.5, 2.5, 3.5, 4.5, 5.5].map(line).join('')}</tbody></table></div>
     <div style="height:12px"></div>
     <div class="card tw"><table class="tbl"><thead><tr><th class="l">Goles por equipo y portería</th><th>Prob.</th></tr></thead><tbody>${tm('h', m.home.name)}${tm('a', m.away.name)}
       ${mrow('Portería a cero: ' + esc(m.home.name), e.cleanSheet.h)}${mrow('Portería a cero: ' + esc(m.away.name), e.cleanSheet.a)}

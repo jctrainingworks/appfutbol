@@ -62,7 +62,7 @@ if (typeof document !== 'undefined' && !window.__filtros) {
   document.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('[data-act]'); if (!b || !document.getElementById('filtros')?.contains(b)) return;
     const f = filters.find(x => x.id === b.dataset.f), act = b.dataset.act;
-    if (act === 'newf') { filters.push(newFilter(uid())); const nf = filters[filters.length - 1]; persist(); render(); document.querySelector(`#filtros [data-f="${nf.id}"]`)?.closest('details')?.setAttribute('open', ''); return; }
+    if (act === 'newf') { filters.push(newFilter(uid())); const nf = filters[filters.length - 1]; persist(); render(); document.querySelector(`#filtros details.fed [data-f="${nf.id}"]`)?.closest('details')?.setAttribute('open', ''); return; }
     if (act === 'example') { filters.push(exampleFilter(uid())); }
     else if (!f) return;
     else if (act === 'addrule') f.rules.push(newRule());
