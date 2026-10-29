@@ -1,7 +1,8 @@
 // «Mis filtros» en Inicio: reglas con tus porcentajes; la pantalla muestra solos los próximos partidos que las cumplen.
 import { esc, fmtTime, dayLabel } from '../ui.js';
 import { SOURCES, marketOptions, marketLabel, applyFilter, newFilter, newRule, exampleFilter, MAX_FILTERS, MAX_RULES } from '../model/filters.js';
-import { loadFilters, saveFilters } from '../filterstore.js';
+import { loadFilters, saveFilters, loadLog, saveLog } from '../filterstore.js';
+import { logHits } from '../model/filterstats.js';
 
 let items = null, names = {}, filters = loadFilters();
 const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
@@ -45,9 +46,16 @@ export function filtersHtml() {
     <p class="mu">Los filtros se guardan en este móvil. Un filtro enseña partidos que cumplen tus números, no apuestas con ventaja: el filtro solo ordena, no sabe si el mercado ya cobra esa probabilidad.</p>`;
 }
 function render() { const el = document.getElementById('filtros'); if (el) { const open = [...el.querySelectorAll('details[open]')].map(d => d.querySelector('[data-f]')?.dataset.f); el.innerHTML = filtersHtml(); el.querySelectorAll('details.fed').forEach(d => { if (open.includes(d.querySelector('[data-f]')?.dataset.f)) d.open = true; }); } }
-export function setItems(list, leagueNames) { items = list; names = leagueNames || {}; render(); }
+// Guarda en el móvil los partidos que cada filtro activo enseña ANTES de empezar: es el registro honrado que luego mide el Historial.
+function logLive() {
+  if (!items) return;
+  let log = loadLog(), n = 0;
+  for (const f of filters) if (f.on) { const r = logHits(log, f, applyFilter(f, items)); log = r.log; n += r.added; }
+  if (n) saveLog(log);
+}
+export function setItems(list, leagueNames) { items = list; names = leagueNames || {}; logLive(); render(); }
 export const resetItems = () => { items = null; };
-const persist = () => saveFilters(filters);
+const persist = () => { saveFilters(filters); logLive(); };
 
 if (typeof document !== 'undefined' && !window.__filtros) {
   window.__filtros = true;

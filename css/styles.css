@@ -173,3 +173,5 @@ h2{font-size:15px;font-weight:650;color:var(--mu);margin:22px 0 8px}
 .flb input{display:block;width:100%;margin-top:4px}.flb input.fnum{width:70px}
 .fr{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;align-items:center}.fr select{flex:1 1 120px;min-width:0}.fr2{display:flex;gap:6px;align-items:center;flex:1 1 100%}.fr2 select{flex:1}.fr2 input{width:64px;text-align:center}
 .fed{margin:10px 0 0;background:transparent;border-color:var(--line)}.fed .btn{margin:6px 6px 6px 0}.fed .btn.bd{color:#f87171}.fbtns{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
+.tbl .tl2{text-align:left;font-size:12px;white-space:normal;min-width:90px}
+.tbl .tl2{min-width:70px}

@@ -4,6 +4,7 @@ import { data } from '../data/index.js';
 import { MODEL_VERSION, VALUE_EV, VOID_DAYS, summarize, result1x2 } from '../model/history.js';
 import { esc, chips, empty } from '../ui.js';
 import { misApuestas } from './mybets.js';
+import { misFiltrosHist } from './filterhist.js';
 
 const num = (x, d = 3) => x == null ? '–' : x.toFixed(d).replace('.', ',');
 const pc0 = p => p == null ? '–' : Math.round(p * 100) + '%';
@@ -85,7 +86,7 @@ function statsHtml(s) {
 export const historial = async ({ q }) => {
   const head = '<h1>Historial</h1><p class="mu">Tus apuestas reales y, más abajo, si el modelo acierta de verdad: antes de cada partido se guarda lo que decía (probabilidades, favoritos y cuotas de ese momento) y cuando termina se compara con lo que pasó. Se guardan todos los próximos partidos, no solo los que parecen buenos.</p>';
   if (data.meta.isDemo) return `${head}${empty('Con datos de demostración no hay historial: solo se guarda con datos reales.')}`;
-  const mine = await misApuestas(), hist = await load();
+  const mine = (await misApuestas()) + (await misFiltrosHist()), hist = await load();
   if (!hist || !hist.records.length) return `${head}${mine}<h2>Pronósticos del modelo</h2>${empty('Todavía no hay pronósticos guardados. La tarea automática (cada 4 horas) empezará a guardarlos con los próximos partidos y aparecerán aquí.')}`;
   const lg = q.get('l') || '', leagues = await data.leagues(), names = Object.fromEntries(leagues.map(l => [l.id, l.name]));
   const recs = hist.records, inLg = [...new Set(recs.map(r => r.l))].filter(id => names[id]);
