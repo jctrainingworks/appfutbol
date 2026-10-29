@@ -59,3 +59,24 @@ export function summarizeBets(bets, outcomeOf) {
     avgOdds: done.length ? done.reduce((s, r) => s + r.b.odds, 0) / done.length : null,
   };
 }
+
+// ---------- Cuota de cierre (CLV) ----------
+// La cuota de cierre es la última cuota Bet365 que guardó el Historial antes del partido (se refresca cada ~4 h hasta el inicio, luego queda congelada).
+// CLV = tu cuota / cuota de cierre − 1. Positivo = cogiste mejor precio que el cierre. Solo existe para 1, X, 2, más/menos 2,5 (lo que trae la fuente).
+const CLOSE = { '1': o => o.b365 && o.b365[0], X: o => o.b365 && o.b365[1], '2': o => o.b365 && o.b365[2], o25: o => o.ou25 && o.ou25[0], u25: o => o.ou25 && o.ou25[1] };
+const DAY4 = 4 * 864e5;
+export function closingFor(bet, records, now = Date.now()) {
+  const f = CLOSE[bet.key]; if (!f || !records) return null;
+  const k = Date.parse(bet.k);
+  const r = records.find(x => x.id === bet.mid) || records.find(x => x.h.id === bet.h.id && x.a.id === bet.a.id && Math.abs(Date.parse(x.k) - k) < DAY4);
+  if (!r || !r.od || Date.parse(r.k) > now) return null;     // sin cuotas guardadas, o el partido aún no ha empezado (la cuota todavía se mueve)
+  const odds = f(r.od);
+  return odds > 1 ? { odds, t: r.t } : null;
+}
+export const clvOf = (bet, closing) => closing ? bet.odds / closing.odds - 1 : null;
+export function summarizeClv(bets, records, now = Date.now()) {
+  const v = [];
+  for (const b of bets) { const c = clvOf(b, closingFor(b, records, now)); if (c != null) v.push(c); }
+  const n = v.length;
+  return { n, of: bets.length, mean: n ? v.reduce((a, x) => a + x, 0) / n : null, better: v.filter(x => x > 0.0005).length, worse: v.filter(x => x < -0.0005).length };
+}

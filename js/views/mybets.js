@@ -2,7 +2,7 @@
 // Se guardan en este móvil (js/betstore.js); la copia de seguridad permite pasarlas a otro dispositivo o recuperarlas.
 import { data } from '../data/index.js';
 import { findResult } from '../model/history.js';
-import { betOutcome, betProfit, summarizeBets, removeBet, setStake, parseBackup, backupText } from '../model/bets.js';
+import { closingFor, clvOf, summarizeClv, betOutcome, betProfit, summarizeBets, removeBet, setStake, parseBackup, backupText } from '../model/bets.js';
 import { loadBets, saveBets } from '../betstore.js';
 import { esc } from '../ui.js';
 
@@ -30,14 +30,29 @@ async function loadResults(bets) {
     for (const b of list) { const m = findResult(ms, { id: b.mid, k: b.k, h: b.h, a: b.a }); if (m) played.set(b.id, m); }  // el id pudo cambiar si cambió la hora
   }
 }
+let records = null;
+async function loadRecords() {
+  try { const r = await fetch(new URL('../../data/history.json', import.meta.url), { cache: 'no-cache' }); const j = r.ok ? await r.json() : null; records = j && Array.isArray(j.records) ? j.records : null; } catch { records = null; }
+}
+const sgp = x => (x >= 0 ? '+' : '−') + Math.abs(x * 100).toFixed(1).replace('.', ',') + '%';
 const outcomeOf = b => betOutcome(b, played.get(b.id));
 
+function clvLine(b) {
+  const c = closingFor(b, records), v = clvOf(b, c);
+  return v == null ? '' : `<span class="mu clv">Cierre @ ${dec(c.odds)} · <b class="${v > 0.0005 ? 'ok' : v < -0.0005 ? 'ko' : ''}">${v > 0.0005 ? 'mejor precio ' : v < -0.0005 ? 'peor precio ' : 'igual '}${sgp(v)}</b></span>`;
+}
+function clvBlock(bets) {
+  const c = summarizeClv(bets, records);
+  if (!c.n) return `<p class="mu">Cuota de cierre: aún no hay ninguna apuesta con cierre guardado (solo existe para 1, X, 2 y más/menos 2,5, y después de empezar el partido).</p>`;
+  return `<div class="st" style="margin-top:10px"><span>Tu cuota frente al cierre (${c.n} de ${c.of} apuestas)</span><span><b class="ev ${c.mean >= 0 ? 'up' : 'dn'}">${sgp(c.mean)}</b> · ${c.better} mejor, ${c.worse} peor</span></div>
+    <p class="mu">${c.n < 20 ? `Con ${c.n} apuesta${c.n === 1 ? '' : 's'} es solo una pista. ` : ''}Si de forma sostenida coges cuotas mejores que las de cierre, ves cosas antes que el mercado: es la mejor señal de ventaja real y no depende del azar de cada partido. Si es negativo, el mercado se movía en tu contra. Compara con Bet365 (cierre aproximado, última cuota guardada); si apuestas en otra casa puede haber diferencias.</p>`;
+}
 function row(b) {
   const m = played.get(b.id), won = outcomeOf(b);
   const state = won === null ? '<span class="mu">pendiente</span>' : `<b class="${won ? 'ok' : 'ko'}">${u(betProfit(b, won))}</b><small class="mu">${m.score.h}-${m.score.a}</small>`;
   return `<div class="hrow brow"><div class="hd">${fdate(b.k)}</div>
     <div class="hb"><b>${esc(b.h.name)} – ${esc(b.a.name)}</b>
-      <span>${esc(b.label)} <b>@ ${dec(b.odds)}</b>${b.p != null ? ` <small class="mu">modelo ${pc0(b.p)}</small>` : ''}</span>
+      <span>${esc(b.label)} <b>@ ${dec(b.odds)}</b>${b.p != null ? ` <small class="mu">modelo ${pc0(b.p)}</small>` : ''}</span>${clvLine(b)}
       <label class="stk">Importe <input class="si" inputmode="decimal" value="${String(b.stake).replace('.', ',')}" data-id="${esc(b.id)}" aria-label="Importe de la apuesta"></label></div>
     <div class="hs bst">${state}<button type="button" class="bdel" data-id="${esc(b.id)}" aria-label="Borrar apuesta">✕</button></div></div>`;
 }
@@ -54,12 +69,13 @@ function html(bets) {
     ${s.settled ? `<div class="st" style="margin-top:10px"><span>Rentabilidad sobre lo apostado (${dec(s.staked)} u.)</span><span><b class="ev ${s.roi >= 0 ? 'up' : 'dn'}">${u(s.roi * 100, 1)}%</b>${s.roiSe != null && s.settled >= 10 ? ` ± ${pc1(2 * s.roiSe)}` : ''}</span></div>
     ${e ? `<div class="st"><span>Ganadas: el modelo esperaba (${e.n} con probabilidad guardada)</span><span>${e.hits.toFixed(1).replace('.', ',')} · real ${e.won}</span></div>
     <div class="st"><span>Beneficio esperado por el modelo / real</span><span>${u(e.profit)} / ${u(e.profitReal)}</span></div>` : ''}` : ''}
+    ${clvBlock(bets)}
     <p class="mu" style="margin-top:8px">${s.settled < 30 ? `Con ${s.settled} apuesta${s.settled === 1 ? '' : 's'} comprobada${s.settled === 1 ? '' : 's'} el resultado depende casi todo del azar: no saques conclusiones todavía. ` : ''}El «±» es el ruido que el azar produce por sí solo (2 errores típicos). Si ganas menos de lo que el modelo esperaba de forma sostenida, el «valor» que veías no era real.</p></div>`;
   return `${kpi}<div class="card list" style="margin-top:12px">${list.map(row).join('')}</div>${buttons}`;
 }
 
 const box = () => document.getElementById('mybets');
-async function refresh() { const b = loadBets(); await loadResults(b); const el = box(); if (el) el.innerHTML = html(b); }
+async function refresh() { const b = loadBets(); await Promise.all([loadResults(b), records ? 0 : loadRecords()]); const el = box(); if (el) el.innerHTML = html(b); }
 const note = t => { const n = document.getElementById('bk-note'); if (n) n.textContent = t; };
 
 if (typeof document !== 'undefined' && !window.__misApuestas) {
@@ -93,6 +109,6 @@ if (typeof document !== 'undefined' && !window.__misApuestas) {
 // Devuelve el bloque HTML de «Mis apuestas» para el Historial.
 export async function misApuestas() {
   const bets = loadBets();
-  await loadResults(bets);
+  await Promise.all([loadResults(bets), loadRecords()]);
   return `<h2>Mis apuestas</h2><div id="mybets">${html(bets)}</div>`;
 }
