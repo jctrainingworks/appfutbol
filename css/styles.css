@@ -175,3 +175,4 @@ h2{font-size:15px;font-weight:650;color:var(--mu);margin:22px 0 8px}
 .fed{margin:10px 0 0;background:transparent;border-color:var(--line)}.fed .btn{margin:6px 6px 6px 0}.fed .btn.bd{color:#f87171}.fbtns{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
 .tbl .tl2{text-align:left;font-size:12px;white-space:normal;min-width:90px}
 .tbl .tl2{min-width:70px}
+#filtros{overflow-anchor:none}.ftog{background:var(--s2);color:var(--ac2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:650;cursor:pointer;white-space:nowrap}

@@ -5,6 +5,7 @@ import { loadFilters, saveFilters, loadLog, saveLog } from '../filterstore.js';
 import { logHits } from '../model/filterstats.js';
 
 let items = null, names = {}, filters = loadFilters();
+const openLists = new Set();                      // filtros cuya lista de partidos está desplegada (por defecto, plegada)
 const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 const short = iso => { const d = dayLabel(iso); return /^(Hoy|Mañana)/.test(d) ? d : new Date(iso).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }); };
 const p0 = p => p == null ? '–' : Math.round(p * 100) + '%';
@@ -31,13 +32,13 @@ function editor(f) {
 }
 function card(f) {
   const hits = items && f.on ? applyFilter(f, items) : null, a = `data-f="${esc(f.id)}"`;
-  const rows = !f.on ? '' : !items ? '<p class="mu">Calculando partidos…</p>' : !hits.length ? '<p class="mu">Ningún partido encaja ahora mismo.</p>'
+  const rows = !f.on || !openLists.has(f.id) ? '' : !items ? '<p class="mu">Calculando partidos…</p>' : !hits.length ? '<p class="mu">Ningún partido encaja ahora mismo.</p>'
     : (() => { const row = ({ it, e }) => `<a class="hrow hoyr" href="#/analisis/${esc(it.m.id)}"><div class="hb"><b>${esc(it.m.home.name)} – ${esc(it.m.away.name)}</b>
         <span>${e.vals.map(v => `${esc(marketLabel(v.rule.src, v.rule.mk))}: <b>${p0(v.p)}</b> <small class="mu">${SOURCES[v.rule.src].toLowerCase()}</small>`).join(' · ')}</span><span class="mu">${esc(names[it.m.leagueId] || '')}</span></div>
         <div class="hs"><small class="mu">${short(it.m.kickoff)}</small><b>${fmtTime(it.m.kickoff)}</b></div></a>`;
       return `<div class="card list">${hits.slice(0, 8).map(row).join('')}</div>${hits.length > 8 ? `<details class="fold"><summary>Ver los ${hits.length - 8} restantes</summary><div class="card list">${hits.slice(8).map(row).join('')}</div></details>` : ''}`; })();
   const desc = f.rules.map(r => `${marketLabel(r.src, r.mk)} ${r.op === 'le' ? '≤' : '≥'} ${r.v}% (${SOURCES[r.src].toLowerCase()})`).join(' · ');
-  return `<div class="ff"><div class="ffh"><label class="flc"><input type="checkbox" ${a} data-k="on"${f.on ? ' checked' : ''}> <b>${esc(f.name)}</b></label>${f.on && items ? `<span class="pkb">${hits.length} partido${hits.length === 1 ? '' : 's'}</span>` : ''}</div>
+  return `<div class="ff"><div class="ffh"><label class="flc"><input type="checkbox" ${a} data-k="on"${f.on ? ' checked' : ''}> <b>${esc(f.name)}</b></label>${f.on && items ? `<button type="button" class="ftog" data-act="toggle" ${a} aria-expanded="${openLists.has(f.id)}">${hits.length} partido${hits.length === 1 ? '' : 's'} ${openLists.has(f.id) ? '▴' : '▾'}</button>` : ''}</div>
     <p class="mu fdesc">${esc(desc)}</p>${rows}${editor(f)}</div>`;
 }
 export function filtersHtml() {
@@ -45,7 +46,19 @@ export function filtersHtml() {
   return `${body}<div class="fbtns"><button type="button" class="btn" data-act="newf"${filters.length >= MAX_FILTERS ? ' disabled' : ''}>＋ Nuevo filtro</button>${filters.length ? '' : '<button type="button" class="btn" data-act="example">Crear el ejemplo: +1,5 al 80 % y +2,5 al 60 %</button>'}</div>
     <p class="mu">Los filtros se guardan en este móvil. Un filtro enseña partidos que cumplen tus números, no apuestas con ventaja: el filtro solo ordena, no sabe si el mercado ya cobra esa probabilidad.</p>`;
 }
-function render() { const el = document.getElementById('filtros'); if (el) { const open = [...el.querySelectorAll('details[open]')].map(d => d.querySelector('[data-f]')?.dataset.f); el.innerHTML = filtersHtml(); el.querySelectorAll('details.fed').forEach(d => { if (open.includes(d.querySelector('[data-f]')?.dataset.f)) d.open = true; }); } }
+function render() {
+  const el = document.getElementById('filtros'); if (!el) return;
+  const open = [...el.querySelectorAll('details[open]')].map(d => d.querySelector('[data-f]')?.dataset.f);
+  const y = window.scrollY, h = el.offsetHeight, ae = document.activeElement, inside = ae && el.contains(ae) && ae.dataset && ae.dataset.k;
+  const key = inside ? ['f', 'r', 'k'].map(k => ae.dataset[k]) : null;
+  el.style.minHeight = h + 'px';                                  // no encoger la página mientras se repinta (si no, el navegador salta de sitio)
+  el.innerHTML = filtersHtml();
+  el.querySelectorAll('details.fed').forEach(d => { if (open.includes(d.querySelector('[data-f]')?.dataset.f)) d.open = true; });
+  window.scrollTo(0, y);
+  if (key) { const sel = `[data-f="${key[0]}"]${key[1] != null ? `[data-r="${key[1]}"]` : ':not([data-r])'}[data-k="${key[2]}"]`; const n = el.querySelector(sel); if (n) n.focus({ preventScroll: true }); }
+  el.style.minHeight = '';
+  window.scrollTo(0, y);
+}
 // Guarda en el móvil los partidos que cada filtro activo enseña ANTES de empezar: es el registro honrado que luego mide el Historial.
 function logLive() {
   if (!items) return;
@@ -65,6 +78,7 @@ if (typeof document !== 'undefined' && !window.__filtros) {
     if (act === 'newf') { filters.push(newFilter(uid())); const nf = filters[filters.length - 1]; persist(); render(); document.querySelector(`#filtros details.fed [data-f="${nf.id}"]`)?.closest('details')?.setAttribute('open', ''); return; }
     if (act === 'example') { filters.push(exampleFilter(uid())); }
     else if (!f) return;
+    else if (act === 'toggle') { if (openLists.has(f.id)) openLists.delete(f.id); else openLists.add(f.id); render(); return; }
     else if (act === 'addrule') f.rules.push(newRule());
     else if (act === 'delrule') f.rules.splice(+b.dataset.r, 1);
     else if (act === 'delf') { if (!confirm(`¿Borrar el filtro «${f.name}»?`)) return; filters = filters.filter(x => x !== f); }
