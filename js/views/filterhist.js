@@ -3,7 +3,7 @@ import { data } from '../data/index.js';
 import { analyze } from '../model/analyze.js';
 import { findResult } from '../model/history.js';
 import { SOURCES, marketLabel, evalFilter, probOf } from '../model/filters.js';
-import { summarize, forFilter, liveRows, sigOf } from '../model/filterstats.js';
+import { summarize, forFilter, liveRows, sigOf, ruleOutcome, oddsFor } from '../model/filterstats.js';
 import { loadFilters, loadLog } from '../filterstore.js';
 import { esc } from '../ui.js';
 
@@ -29,6 +29,19 @@ async function loadPlayed(entries) {
   }
 }
 
+const mark = v => v === true ? '<b class="ok">✓</b>' : v === false ? '<b class="ko">✗</b>' : '<b class="mu">·</b>';
+const fdate = iso => new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+// Lista partido a partido: cada regla con su probabilidad de entonces y si se cumplió (✓/✗; · = la fuente no trae el dato). Más recientes primero.
+function listHtml(f, rows, title) {
+  if (!rows.length) return '';
+  const sorted = [...rows].sort((a, b) => a.m.kickoff < b.m.kickoff ? 1 : -1);
+  const row = r => `<div class="hrow"><div class="hd">${fdate(r.m.kickoff)}</div><div class="hb"><b>${esc(r.m.home.name)} – ${esc(r.m.away.name)}</b>
+    ${f.rules.map((rule, i) => `<span class="pk">${mark(ruleOutcome(rule, r.m))} ${esc(marketLabel(rule.src, rule.mk))} <small>${p0(r.vals[i])}${oddsLabel(rule, r.odds)}</small></span>`).join('')}</div>
+    <div class="hs">${r.m.score.h}-${r.m.score.a}</div></div>`;
+  const first = sorted.slice(0, 10), rest = sorted.slice(10);
+  return `<details class="fold"><summary>${title} (${sorted.length})</summary><div class="card list">${first.map(row).join('')}</div>${rest.length ? `<details class="fold"><summary>Ver los ${rest.length} anteriores</summary><div class="card list">${rest.map(row).join('')}</div></details>` : ''}</details>`;
+}
+const oddsLabel = (rule, odds) => { const o = oddsFor(rule.mk, odds); return o ? ` · @${o.toFixed(2).replace('.', ',')}` : ''; };
 const verdict = (r, n) => {
   if (n < 30) return `<span class="mu">pocos datos</span>`;
   if (r.z == null) return '';
@@ -45,14 +58,14 @@ async function liveBlock(f) {
   const entries = forFilter(loadLog(), f); await loadPlayed(entries);
   const { rows, pending } = liveRows(entries, played);
   const head = `<div class="st"><span><b>En vivo</b> (partidos que el filtro enseñó antes de empezar)</span><span>${rows.length} comprobados · ${pending} pendientes</span></div>`;
-  return head + (rows.length ? table(f, summarize(f, rows), false) : '<p class="mu">Aún no hay partidos comprobados. El filtro apunta los partidos cuando abres Inicio; se comprueban solos cuando terminan.</p>');
+  return head + (rows.length ? table(f, summarize(f, rows), false) + listHtml(f, rows, 'Partidos de este filtro, uno a uno') : '<p class="mu">Aún no hay partidos comprobados. El filtro apunta los partidos cuando abres Inicio; se comprueban solos cuando terminan.</p>');
 }
 function btBlock(f) {
   const st = btCache.get(sigOf(f));
   if (!bt) return `<button type="button" class="btn" data-fh="run">Medir con los últimos ${DAYS} días (partidos ya jugados)</button>`;
   if (!st) return '<p class="mu">Sin datos para este filtro.</p>';
   return `<div class="st"><span><b>Retrospectivo</b> (últimos ${bt.days} días, ${bt.rows.length} partidos revisados)</span><span>${st.n} cumplen el filtro</span></div>
-    ${st.n ? table(f, st, true) : '<p class="mu">En ese periodo ningún partido habría cumplido este filtro.</p>'}
+    ${st.n ? table(f, st, true) + listHtml(f, st.matched, 'Partidos de este filtro, uno a uno') : '<p class="mu">En ese periodo ningún partido habría cumplido este filtro.</p>'}
     <p class="mu">Cada partido se evalúa solo con datos anteriores a él. Pero las cuotas son las de cierre de la fuente y, si ajustaste los porcentajes mirando esto, es a posteriori: lo honrado es el registro «En vivo».</p>`;
 }
 const filterCard = async f => `<div class="ff"><div class="ffh"><b>${esc(f.name)}</b>${f.on ? '' : '<span class="mu">apagado</span>'}</div>
@@ -85,7 +98,7 @@ async function runBacktest(btn) {
   bt = { rows, days: DAYS };
   for (const f of loadFilters()) {
     const matched = rows.filter(r => evalFilter(f, { pr: r.pr, tr: r.tr, odds: r.odds }).ok).map(r => ({ m: r.m, vals: f.rules.map(rule => probOf(rule, { pr: r.pr, tr: r.tr, odds: r.odds })), odds: r.odds }));
-    btCache.set(sigOf(f), summarize(f, matched, rows));
+    btCache.set(sigOf(f), { ...summarize(f, matched, rows), matched });
   }
   await repaint();
 }
